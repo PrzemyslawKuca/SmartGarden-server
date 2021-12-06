@@ -1,14 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import {
-  AuthenticationError
-} from 'apollo-server-express';
-import {
-  User
-} from "./models/User.js";
-import {
-  createTokens
-} from "./auth.js";
+import {AuthenticationError} from 'apollo-server-express';
+import {User} from "./models/User.js";
+import {SensorReading} from "./models/SensorReading.js";
+import {Settings} from "./models/Settings.js";
+import {createTokens} from "./auth.js";
 import nodemailer from 'nodemailer';
 import {
   EMAIL_SECRET,
@@ -28,7 +24,25 @@ export const resolvers = {
       return User.findOne({
         id: req.userId
       }).exec();
-    }
+    },
+    sensorReads: (_, __,{
+      res,
+      req
+    }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+      return SensorReading.find({}).exec();
+    },
+    settings: (_, __,{
+      res,
+      req
+    }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+      return Settings.find({}).exec();
+    },
   },
   Mutation: {
     register: async (_, {
@@ -115,13 +129,47 @@ export const resolvers = {
 
       return user;
     },
-    confirmEmail: async (_, {
-      email
+    inputSettings: async (_, {
+      mode,
+      interval
     }, {
-      res
+      res,
+      req
     }) => {
-      //TODO: confirmEmail
-      return false;
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      const existingSettings = await Settings.find({}).exec();
+      console.log(existingSettings)
+
+      if(existingSettings.length > 0){
+        throw new Error('Settings already exist')
+      }
+
+      const settings = new Settings({
+        mode,
+        interval,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+
+      await settings.save();
+
+      return settings;
+    },
+    updateSettings: async (_, {
+      mode,
+      interval
+    }, {
+      res,
+      req
+    }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      return Settings.find({}).exec();
     },
   }
 };
