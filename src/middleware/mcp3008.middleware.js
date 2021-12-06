@@ -16,18 +16,9 @@ export const mcp3008Module = {
                     if (err) throw err;
                     const rawValue = ((message[0].receiveBuffer[1] & 0x03) << 8) +
                         message[0].receiveBuffer[2];
-                    const voltage = rawValue * 5 / 1023;
-                    const percent = 100 - (100 * (rawValue - 50)) / 760;
-                    let percentParse = 0;
-
-                    if (percent < 0) {
-                        percentParse = 0
-                    } else if (percent > 100) {
-                        percentParse = 100
-                    } else {
-                        percentParse = percent
-                    }
-                    resolve(percentParse)
+                    const voltage = rawValue * 3.3 / 1023;
+                    const percent = ((3.3 - voltage) / 3.3) * 100 ;
+                    resolve(percent)
                 });
             });
         })
