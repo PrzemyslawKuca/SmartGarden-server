@@ -70,6 +70,7 @@ export const typeDefs = gql`
   type Mutation {
     register(email: String!, password: String!, name: String!): Boolean
     login(email: String!, password: String!): User
+    editUser(email: String, password: String, name: String): User
     setupSettings(mode: String, interval: Int): Settings
     updateSettings(mode: String, interval: Int, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles

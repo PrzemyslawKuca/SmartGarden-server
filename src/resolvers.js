@@ -110,6 +110,26 @@ export const resolvers = {
 
       return user;
     },
+    editUser: async (_, { name, email, password}, { res, req}) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      const emailExist = await User.findOne({email: email});
+      if(emailExist){
+        throw new Error("Email exists")
+      }
+
+
+      await User.updateOne({_id: req.userId}, {
+        name: name,
+        email: email,
+        password: password
+      });
+
+      const savedUser = await User.findOne({_id: req.userId});
+      return savedUser;
+    },
     setupSettings: async (_, {mode, interval}, {res, req}) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
