@@ -123,10 +123,10 @@ const startServer = async () => {
       created_at: new Date().toISOString()
     })
 
-    newSensorReading.save()
+    await newSensorReading.save()
   }
   
-  setInterval(sensorsUpdate, 10 * 60 * 1000 ); // Every 10 mins
+  setInterval(sensorsUpdate, 10 * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
 
   app.get('/confirmation/:token', async (req, res) => {
     try {

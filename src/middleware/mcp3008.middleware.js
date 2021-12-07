@@ -25,7 +25,7 @@ export const mcp3008Module = {
                     messageMoisture[0].receiveBuffer[2];
                     const voltage = rawValue * 3.3 / 1023;
                     const percent = ((3.3 - voltage) / 3.3) * 100 ;
-                    resolve(percent)
+                    resolve(percent.toFixed(2))
                 });
             });
         })
@@ -40,7 +40,7 @@ export const mcp3008Module = {
                         messageLight[0].receiveBuffer[2];
                     const voltage = rawValue * 3.3 / 1023;
                     const percent = ((3.3 - voltage) / 3.3) * 100 ;
-                    resolve(percent)
+                    resolve(percent.toFixed(2))
                 });
             });
         })
