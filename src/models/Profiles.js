@@ -7,7 +7,10 @@ export const Profiles = mongoose.model("profiles", {
         soil_humidity: Number,
         air_temperature: Number,
         air_presuer: Number,
-        light_level: Number,
+        light: {
+            start_date: String,
+            end_date: String
+        },
         start_date: String,
         end_date: String,
     }],

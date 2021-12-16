@@ -1,6 +1,11 @@
 import { gql } from "apollo-server-express";
 
 export const typeDefs = gql`
+  type Tokens{
+    access_token: String!
+    refresh_token: String!
+  }
+
   type User {
     id: ID!
     email: String!
@@ -15,7 +20,7 @@ export const typeDefs = gql`
     air_humidity: Float
     soil_humidity: Float
     air_temperature: Float
-    air_presuer: Float
+    air_pressure: Float
     light_level: Float
     cpu_temperature: Float
     created_at: String
@@ -46,7 +51,12 @@ export const typeDefs = gql`
     air_humidity: Float
     soil_humidity: Float
     air_temperature: Float
-    light_level: Float
+    light: LightTimetable
+    start_date: String
+    end_date: String
+  }
+
+  type LightTimetable{
     start_date: String
     end_date: String
   }
@@ -55,7 +65,12 @@ export const typeDefs = gql`
     air_humidity: Float
     soil_humidity: Float
     air_temperature: Float
-    light_level: Float
+    light: LightTimetableInput
+    start_date: String
+    end_date: String
+  }
+
+  input LightTimetableInput{
     start_date: String
     end_date: String
   }
@@ -69,7 +84,8 @@ export const typeDefs = gql`
 
   type Mutation {
     register(email: String!, password: String!, name: String!): Boolean
-    login(email: String!, password: String!): User
+    login(email: String!, password: String!): Tokens
+    resetPassword(email: String!): Boolean
     editUser(email: String, password: String, name: String): User
     setupSettings(mode: String, interval: Int): Settings
     updateSettings(mode: String, interval: Int, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings

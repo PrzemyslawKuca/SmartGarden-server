@@ -29,42 +29,20 @@ const startServer = async () => {
 
   app.use(cookieParser());
   app.use(async (req, res, next) => {
-    const refreshToken = req.cookies["refresh-token"];
-    const accessToken = req.cookies["access-token"];
-    if (!refreshToken && !accessToken) {
-      return next();
-    }
+    const accessToken = req.headers.authorization || '';
+
+    const token = accessToken.split(" ");
+
+    let decodeToken;
 
     try {
-      const data = jwt.verify(accessToken, ACCESS_TOKEN_SECRET);
-      req.userId = data.userId;
-      return next();
-    } catch {}
-
-    if (!refreshToken) {
-      return next();
+      decodeToken = await jwt.verify(token[1], ACCESS_TOKEN_SECRET);
+      req.userId = decodeToken.id
+      next();
+    } catch (err) {
+      next();
     }
 
-    let data;
-
-    try {
-      data = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
-    } catch {
-      return next();
-    }
-
-    const user = await User.findOne({id: data.userId}).exec();
-    if (!user || user.count !== data.count) {
-      return next();
-    }
-
-    const tokens = createTokens(user);
-
-    res.cookie("refresh-token", tokens.refreshToken);
-    res.cookie("access-token", tokens.accessToken);
-    req.userId = user.id;
-
-    next();
   });
 
   await server.start()

@@ -6,12 +6,8 @@ import {SensorReading} from "./models/SensorReading.js";
 import {Settings} from "./models/Settings.js";
 import {Profiles} from "./models/Profiles.js";
 import {createTokens} from "./auth.js";
-import nodemailer from 'nodemailer';
-import {
-  EMAIL_SECRET,
-  EMAIL_LOGIN,
-  EMAIL_PASSWORD
-} from "./constants.js";
+import {transporter} from './helpers/nodemailer.js';
+import {EMAIL_SECRET} from "./constants.js";
 
 export const resolvers = {
   Query: {
@@ -42,15 +38,6 @@ export const resolvers = {
   },
   Mutation: {
     register: async (_, {email, password, name}) => {
-
-      const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-          user: EMAIL_LOGIN,
-          pass: EMAIL_PASSWORD,
-        },
-      });
-
       const user = await User.find({'email': email}).exec();
 
       if (user.length == 0) {
@@ -84,23 +71,23 @@ export const resolvers = {
         });
         return true;
       }
-      return false;
+      throw new Error('Email already in use')
     },
     login: async (_, {email, password}, {res}) => {
       const user = await User.findOne({'email': email}).exec();
 
       if (!user) {
-        return null;
+        throw new Error('User not found')
       }
 
       const valid = await bcrypt.compare(password, user.password);
 
       if (!valid) {
-        return null;
+        throw new Error('Password not valid');
       }
 
       if (!user.confirmed) {
-        return null;
+        throw new Error('User not confirmed');
       }
 
       const {accessToken,refreshToken} = createTokens(user);
@@ -108,7 +95,36 @@ export const resolvers = {
       res.cookie("refresh-token", refreshToken);
       res.cookie("access-token", accessToken);
 
-      return user;
+      return {
+        access_token: accessToken,
+        refresh_token: refreshToken
+      };
+    },
+    resetPassword: async (_, {email}, {res, req}) =>{
+      const user = await User.findOne({'email': email}).exec();
+
+      let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let passwordLength = 12;
+      let password = "";
+
+      for (var i = 0; i <= passwordLength; i++) {
+        var randomNumber = Math.floor(Math.random() * chars.length);
+        password += chars.substring(randomNumber, randomNumber +1);
+       }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await User.updateOne({'_id': user._id}, {
+        password: hashedPassword
+      });
+
+      transporter.sendMail({
+        to: email,
+        subject: 'Reset password',
+        html: `Your new password: ${password}`,
+      });
+
+      return true;
     },
     editUser: async (_, { name, email, password}, { res, req}) => {
       if (!req.userId) {
