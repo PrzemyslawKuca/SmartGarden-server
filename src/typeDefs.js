@@ -77,8 +77,10 @@ export const typeDefs = gql`
 
   type Query {
     me: User
+    users: [User]
     sensorReads: [SensorReads]
-    settings: Settings
+    currentSensorsReading: SensorReads
+    settings: [Settings]
     profiles: [Profiles]
   }
 
@@ -86,7 +88,9 @@ export const typeDefs = gql`
     register(email: String!, password: String!, name: String!): Boolean
     login(email: String!, password: String!): Tokens
     resetPassword(email: String!): Boolean
+    addUser(email: String, name: String): Boolean
     editUser(email: String, password: String, name: String): User
+    deleteUser(id: ID): Boolean
     setupSettings(mode: String, interval: Int): Settings
     updateSettings(mode: String, interval: Int, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles

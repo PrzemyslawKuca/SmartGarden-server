@@ -1,8 +1,3 @@
-import {bmp180Sensor} from './middleware/bmp180.middleware.js';
-import {mcp3008Module} from './middleware/mcp3008.middleware.js'
-import {dhtSensor} from './middleware/dht.middleware.js';
-import fs from "fs";
-
 import { ApolloServer, AuthenticationError } from "apollo-server-express";
 import mongoose from "mongoose";
 import express from "express";
@@ -12,10 +7,10 @@ import cookieParser from "cookie-parser";
 import { typeDefs } from "./typeDefs.js";
 import { resolvers } from "./resolvers.js";
 import {ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, EMAIL_SECRET} from "./constants.js";
-import {createTokens} from "./auth.js";
 import {User} from "./models/User.js";
-import {SensorReading} from "./models/SensorReading.js";
 import config from './config.js';
+
+import { saveSensorsRead } from "./helpers/saveSensorsRead.js";
 
 const startServer = async () => {
   const app = express();
@@ -59,52 +54,8 @@ const startServer = async () => {
           }
         }),
   });  
-  
-  const sensorsUpdate = async () => {
-    var air_humidity = 0;
-    var soil_humidity = 0;
-    var air_temperature = 0;
-    var air_presuer = 0;
-    var light_level = 0;
-    var cpu_temperature = 0;
 
-    await dhtSensor.getHumidity().then((humidity) => {
-      air_humidity = humidity
-    })
-
-    await mcp3008Module.getMoistureLevel().then((moisture) => {
-      soil_humidity = moisture
-    })
-
-    await bmp180Sensor.getTemperature().then((temperature) => {
-      air_temperature = temperature
-    })
-
-    await bmp180Sensor.getPressure().then((pressure) => {
-      air_presuer = pressure
-    })
-
-    await mcp3008Module.getLightLevel().then((light) => {
-      light_level = light
-    })
-  
-    var tempFile = fs.readFileSync("/sys/class/thermal/thermal_zone0/temp");
-    cpu_temperature = tempFile / 1000;
-
-    const newSensorReading = new SensorReading({
-      air_humidity,
-      soil_humidity,
-      air_temperature,
-      air_presuer,
-      light_level,
-      cpu_temperature,
-      created_at: new Date().toISOString()
-    })
-
-    await newSensorReading.save()
-  }
-  
-  setInterval(sensorsUpdate, 10 * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
+  setInterval(saveSensorsRead, 1 * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
 
   app.get('/confirmation/:token', async (req, res) => {
     try {

@@ -1,35 +1,51 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import {AuthenticationError} from 'apollo-server-express';
-import {User} from "./models/User.js";
-import {SensorReading} from "./models/SensorReading.js";
-import {Settings} from "./models/Settings.js";
-import {Profiles} from "./models/Profiles.js";
-import {createTokens} from "./auth.js";
-import {transporter} from './helpers/nodemailer.js';
-import {EMAIL_SECRET} from "./constants.js";
+import { AuthenticationError } from 'apollo-server-express';
+import { User } from "./models/User.js";
+import { SensorReading } from "./models/SensorReading.js";
+import { Settings } from "./models/Settings.js";
+import { Profiles } from "./models/Profiles.js";
+import { createTokens } from "./auth.js";
+import { transporter } from './helpers/nodemailer.js';
+import { EMAIL_SECRET } from "./constants.js";
 
 export const resolvers = {
   Query: {
-    me: (_, __, {res, req}) => {
+    me: (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
-      return User.findOne({id: req.userId}).exec();
+      return User.findOne({
+        id: req.userId
+      }).exec();
     },
-    sensorReads: (_, __,{res, req}) => {
+    users: (_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+      return User.find({}).exec();
+    },
+    sensorReads: (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
       return SensorReading.find({}).exec();
     },
-    settings: (_, __,{res, req}) => {
+    currentSensorsReading: (_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+      return SensorReading.findOne().sort({
+        'created_at': -1
+      }).exec();
+    },
+    settings: (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
       return Settings.find({}).exec();
     },
-    profiles: (_, __,{res, req}) => {
+    profiles: (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -37,8 +53,11 @@ export const resolvers = {
     },
   },
   Mutation: {
-    register: async (_, {email, password, name}) => {
-      const user = await User.find({'email': email}).exec();
+    register: async (_, { email, password, name }) => {
+
+      const user = await User.find({
+        'email': email
+      }).exec();
 
       if (user.length == 0) {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -53,15 +72,16 @@ export const resolvers = {
 
         await newUser.save(() => {
           jwt.sign({
-              user: email
-            },
+            user: email
+          },
             EMAIL_SECRET, {
-              expiresIn: '1d',
-            },
+            expiresIn: '1d',
+          },
             (err, emailToken) => {
               const url = `http://localhost:4000/confirmation/${emailToken}`;
 
               transporter.sendMail({
+                from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
                 to: email,
                 subject: 'Confirm Email',
                 html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
@@ -73,8 +93,10 @@ export const resolvers = {
       }
       throw new Error('Email already in use')
     },
-    login: async (_, {email, password}, {res}) => {
-      const user = await User.findOne({'email': email}).exec();
+    login: async (_, { email, password }, { res }) => {
+      const user = await User.findOne({
+        'email': email
+      }).exec();
 
       if (!user) {
         throw new Error('User not found')
@@ -90,7 +112,10 @@ export const resolvers = {
         throw new Error('User not confirmed');
       }
 
-      const {accessToken,refreshToken} = createTokens(user);
+      const {
+        accessToken,
+        refreshToken
+      } = createTokens(user);
 
       res.cookie("refresh-token", refreshToken);
       res.cookie("access-token", accessToken);
@@ -100,8 +125,10 @@ export const resolvers = {
         refresh_token: refreshToken
       };
     },
-    resetPassword: async (_, {email}, {res, req}) =>{
-      const user = await User.findOne({'email': email}).exec();
+    resetPassword: async (_, { email }, { res, req }) => {
+      const user = await User.findOne({
+        'email': email
+      }).exec();
 
       let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       let passwordLength = 12;
@@ -109,12 +136,14 @@ export const resolvers = {
 
       for (var i = 0; i <= passwordLength; i++) {
         var randomNumber = Math.floor(Math.random() * chars.length);
-        password += chars.substring(randomNumber, randomNumber +1);
-       }
+        password += chars.substring(randomNumber, randomNumber + 1);
+      }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      await User.updateOne({'_id': user._id}, {
+      await User.updateOne({
+        '_id': user._id
+      }, {
         password: hashedPassword
       });
 
@@ -126,33 +155,39 @@ export const resolvers = {
 
       return true;
     },
-    editUser: async (_, { name, email, password}, { res, req}) => {
+    editUser: async (_, { name, email, password }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
 
-      const emailExist = await User.findOne({email: email});
-      if(emailExist){
+      const emailExist = await User.findOne({
+        email: email
+      });
+      if (emailExist) {
         throw new Error("Email exists")
       }
 
 
-      await User.updateOne({_id: req.userId}, {
+      await User.updateOne({
+        _id: req.userId
+      }, {
         name: name,
         email: email,
         password: password
       });
 
-      const savedUser = await User.findOne({_id: req.userId});
+      const savedUser = await User.findOne({
+        _id: req.userId
+      });
       return savedUser;
     },
-    setupSettings: async (_, {mode, interval}, {res, req}) => {
+    setupSettings: async (_, { mode, interval }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
 
       const existingSettings = await Settings.find({}).exec();
-      if(existingSettings.length > 0){
+      if (existingSettings.length > 0) {
         throw new Error('Settings already exist')
       }
 
@@ -170,24 +205,89 @@ export const resolvers = {
 
       return settings;
     },
-    updateSettings: async (_, {mode, interval, pump, pump_fertilizer, light, fan}, { res, req}) => {
+    deleteUser: async (_, { id }, { res, req }) => {
+      try {
+        await User.deleteOne({
+          _id: id
+        }).exec();
+        return true;
+      } catch {
+        return false;
+      }
+
+    },
+    addUser: async (_, { email, name }, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      const user = await User.find({
+        'email': email
+      }).exec();
+
+      if (user.length == 0) {
+        let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let passwordLength = 12;
+        let password = "";
+
+        for (var i = 0; i <= passwordLength; i++) {
+          var randomNumber = Math.floor(Math.random() * chars.length);
+          password += chars.substring(randomNumber, randomNumber + 1);
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({
+          name,
+          email,
+          password: hashedPassword,
+          confirmed: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        await newUser.save(() => {
+          jwt.sign({
+            user: email
+          },
+            EMAIL_SECRET, {
+            expiresIn: '1d',
+          },
+            (err, emailToken) => {
+              const url = `http://localhost:4000/confirmation/${emailToken}`;
+
+              transporter.sendMail({
+                from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+                to: email,
+                subject: 'Confirm Email',
+                html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
+              });
+            },
+          );
+        });
+
+        return true;
+      }
+    },
+    updateSettings: async (_, { mode, interval, pump, pump_fertilizer, light, fan }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
 
       await Settings.updateOne({}, {
-        mode: mode, 
-        interval: interval, 
+        mode: mode,
+        interval: interval,
         pump: pump,
         pump_fertilizer: pump_fertilizer,
         light: light,
         fan: fan,
-        updated_at: new Date().toISOString()}).exec();
+        updated_at: new Date().toISOString()
+      }).exec();
 
       const savedSettings = await Settings.findOne({});
       return savedSettings;
     },
-    addProfile: async (_, {name, schedule}, { res, req}) => {
+    addProfile: async (_, { name, schedule }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -203,18 +303,22 @@ export const resolvers = {
       return profile
 
     },
-    editProfile: async (_, {id, name, schedule}, { res, req}) => {
+    editProfile: async (_, { id, name, schedule }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
 
-      await Profiles.updateOne({id: id}, {
+      await Profiles.updateOne({
+        id: id
+      }, {
         name: name,
         schedule: schedule,
         updated_at: new Date().toISOString(),
       });
 
-      const savedProfile = await Profiles.findOne({id: id});
+      const savedProfile = await Profiles.findOne({
+        id: id
+      });
       return savedProfile;
 
     }

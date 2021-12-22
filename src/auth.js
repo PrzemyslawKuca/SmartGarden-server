@@ -10,7 +10,7 @@ export const createTokens = (user) => {
         }
     );
     const accessToken = jwt.sign({ id: user.id }, ACCESS_TOKEN_SECRET, {
-        expiresIn: "15min"
+        expiresIn: "1d"
     });
 
     return { refreshToken, accessToken };
