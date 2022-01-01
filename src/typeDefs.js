@@ -27,8 +27,9 @@ export const typeDefs = gql`
   }
 
   type Settings{
-    id: ID!
+    id: ID
     mode: String
+    current_plan: ID
     interval: Int
     pump: Boolean
     pump_fertilizer: Boolean
@@ -39,40 +40,43 @@ export const typeDefs = gql`
   }
 
   type Profiles{
-    id: ID!
-    name: String!
-    schedule: [Schedule!]!
+    id: ID
+    name: String
+    schedule: [Schedule]
     created_at: String
     updated_at: String
   }
 
   type Schedule{
-    id: ID!
+    id: ID
     air_humidity: Float
     soil_humidity: Float
     air_temperature: Float
     light: LightTimetable
     start_date: String
-    end_date: String
+    duration: Int
   }
 
   type LightTimetable{
-    start_date: String
-    end_date: String
+    start_hour: String
+    end_hour: String
+    minimumLevel: Int
   }
 
   input ScheduleInput{
     air_humidity: Float
     soil_humidity: Float
     air_temperature: Float
+    duration: Int
     light: LightTimetableInput
     start_date: String
     end_date: String
   }
 
   input LightTimetableInput{
-    start_date: String
-    end_date: String
+    start_hour: String
+    end_hour: String
+    minimumLevel: Int
   }
 
   type Query {
@@ -90,10 +94,11 @@ export const typeDefs = gql`
     resetPassword(email: String!): Boolean
     addUser(email: String, name: String): Boolean
     editUser(email: String, password: String, name: String): User
-    deleteUser(id: ID): Boolean
+    deleteUser(id: ID!): Boolean
     setupSettings(mode: String, interval: Int): Settings
     updateSettings(mode: String, interval: Int, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles
+    deleteProfile(id: ID!): Boolean
     editProfile(id: ID!, name: String!, schedule: [ScheduleInput!]!): Profiles
   }
 `;

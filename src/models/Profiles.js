@@ -8,11 +8,11 @@ export const Profiles = mongoose.model("profiles", {
         air_temperature: Number,
         air_presuer: Number,
         light: {
-            start_date: String,
-            end_date: String
+            start_hour: String,
+            end_hour: String,
+            minimumLevel: Number,
         },
-        start_date: String,
-        end_date: String,
+        duration: String,
     }],
     created_at: String,
     updated_at: String

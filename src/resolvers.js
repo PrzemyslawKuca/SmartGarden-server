@@ -163,7 +163,8 @@ export const resolvers = {
       const emailExist = await User.findOne({
         email: email
       });
-      if (emailExist) {
+
+      if (req.userId != emailExist.id) {
         throw new Error("Email exists")
       }
 
@@ -321,6 +322,17 @@ export const resolvers = {
       });
       return savedProfile;
 
-    }
+    },
+    deleteProfile: async (_, { id }, { res, req }) => {
+      try {
+        await Profiles.deleteOne({
+          _id: id
+        }).exec();
+        return true;
+      } catch {
+        return false;
+      }
+
+    },
   }
 };

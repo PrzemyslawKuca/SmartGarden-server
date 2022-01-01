@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 
 import { typeDefs } from "./typeDefs.js";
 import { resolvers } from "./resolvers.js";
+import { Settings } from "./models/Settings.js";
 import {ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, EMAIL_SECRET} from "./constants.js";
 import {User} from "./models/User.js";
 import config from './config.js';
@@ -55,7 +56,12 @@ const startServer = async () => {
         }),
   });  
 
-  setInterval(saveSensorsRead, 1 * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
+  let settings = await Settings.findOne({}).exec()
+  
+  setInterval(async() => {
+    saveSensorsRead()
+    settings = await Settings.findOne({}).exec()
+  }, settings.interval * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
 
   app.get('/confirmation/:token', async (req, res) => {
     try {
