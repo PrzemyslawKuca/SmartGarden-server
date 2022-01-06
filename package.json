@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha src/test/index.js --reporter spec --timeout 10000",
-    "start": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
   },
   "author": "Przemyslaw Kuca",
   "license": "ISC",
@@ -20,6 +21,7 @@
     "chai": "^4.3.4",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
     "easygraphql-tester": "^6.0.1",
     "express": "^4.17.1",
     "fs": "^0.0.1-security",

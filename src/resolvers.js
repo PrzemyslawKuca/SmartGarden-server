@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AuthenticationError } from 'apollo-server-express';
@@ -7,7 +10,6 @@ import { Settings } from "./models/Settings.js";
 import { Profiles } from "./models/Profiles.js";
 import { createTokens } from "./auth.js";
 import { transporter } from './helpers/nodemailer.js';
-import { EMAIL_SECRET } from "./constants.js";
 import { registerEmailBody } from "./assets/registerEmailBody.js";
 import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
 
@@ -76,17 +78,14 @@ export const resolvers = {
           jwt.sign({
             user: email
           },
-            EMAIL_SECRET, {
+            process.env.EMAIL_SECRET, {
             expiresIn: '1d',
           },
             (err, emailToken) => {
-              // const url = `http://localhost:4000/confirmation/${emailToken}`;
-
               transporter.sendMail({
                 from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
                 to: email,
                 subject: 'Confirm Email',
-                // html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
                 html: registerEmailBody(emailToken),
               });
             },
@@ -254,7 +253,7 @@ export const resolvers = {
           jwt.sign({
             user: email
           },
-            EMAIL_SECRET, {
+            process.env.EMAIL_SECRET, {
             expiresIn: '1d',
           },
             (err, emailToken) => {

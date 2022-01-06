@@ -1,3 +1,6 @@
+import dotenv from 'dotenv'
+dotenv.config()
+
 import { ApolloServer, AuthenticationError } from "apollo-server-express";
 import mongoose from "mongoose";
 import express from "express";
@@ -7,12 +10,11 @@ import cookieParser from "cookie-parser";
 import { typeDefs } from "./typeDefs.js";
 import { resolvers } from "./resolvers.js";
 import { Settings } from "./models/Settings.js";
-import {ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, EMAIL_SECRET} from "./constants.js";
 import {User} from "./models/User.js";
 import config from './config.js';
 
 import { saveSensorsRead } from "./helpers/saveSensorsRead.js";
-import { waterPump } from "./middleware/waterPump.middleware.js";
+// import { waterPump } from "./middleware/waterPump.middleware.js";
 
 const startServer = async () => {
   const app = express();
@@ -33,7 +35,7 @@ const startServer = async () => {
     let decodeToken;
 
     try {
-      decodeToken = await jwt.verify(token[1], ACCESS_TOKEN_SECRET);
+      decodeToken = await jwt.verify(token[1], process.env.ACCESS_TOKEN_SECRET);
       req.userId = decodeToken.id
       next();
     } catch (err) {
@@ -70,7 +72,7 @@ const startServer = async () => {
 
   app.get('/confirmation/:token', async (req, res) => {
     try {
-      const { user } = jwt.verify(req.params.token, EMAIL_SECRET);
+      const { user } = jwt.verify(req.params.token, process.env.EMAIL_SECRET);
       await User.updateOne({ 'email': user }, {confirmed: true});
     } catch (e) {
       console.log(e)
