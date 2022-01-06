@@ -12,6 +12,7 @@ import {User} from "./models/User.js";
 import config from './config.js';
 
 import { saveSensorsRead } from "./helpers/saveSensorsRead.js";
+import { waterPump } from "./middleware/waterPump.middleware.js";
 
 const startServer = async () => {
   const app = express();
@@ -62,6 +63,10 @@ const startServer = async () => {
     saveSensorsRead()
     settings = await Settings.findOne({}).exec()
   }, settings.interval * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
+
+  // setInterval(()=>{
+    // waterPump()
+  // }, 10000)
 
   app.get('/confirmation/:token', async (req, res) => {
     try {

@@ -14,10 +14,10 @@ const sensor = new BMP180.BMP180({
 export const bmp180Sensor = {
     getTemperature: async function () {
         const { temperature } = await sensor.read();
-        return temperature;
+        return parseFloat(temperature);
     },
     getPressure: async function () {
         const { pressure } = await sensor.read();
-        return (pressure / 100).toFixed(2);
+        return parseFloat((pressure / 100).toFixed(2));
     },
 };

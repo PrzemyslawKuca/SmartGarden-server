@@ -8,6 +8,8 @@ import { Profiles } from "./models/Profiles.js";
 import { createTokens } from "./auth.js";
 import { transporter } from './helpers/nodemailer.js';
 import { EMAIL_SECRET } from "./constants.js";
+import { registerEmailBody } from "./assets/registerEmailBody.js";
+import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
 
 export const resolvers = {
   Query: {
@@ -78,13 +80,14 @@ export const resolvers = {
             expiresIn: '1d',
           },
             (err, emailToken) => {
-              const url = `http://localhost:4000/confirmation/${emailToken}`;
+              // const url = `http://localhost:4000/confirmation/${emailToken}`;
 
               transporter.sendMail({
                 from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
                 to: email,
                 subject: 'Confirm Email',
-                html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
+                // html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
+                html: registerEmailBody(emailToken),
               });
             },
           );
@@ -150,7 +153,7 @@ export const resolvers = {
       transporter.sendMail({
         to: email,
         subject: 'Reset password',
-        html: `Your new password: ${password}`,
+        html: resetPasswordEmailBody(password),
       });
 
       return true;
