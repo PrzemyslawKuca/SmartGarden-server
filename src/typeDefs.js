@@ -83,9 +83,9 @@ export const typeDefs = gql`
     me: User
     users: [User]
     sensorReads: [SensorReads]
-    currentSensorsReading: SensorReads
+    lastSensorsReading: SensorReads
     settings: [Settings]
-    profiles: [Profiles]
+    profiles(id: ID): [Profiles]
   }
 
   type Mutation {
@@ -96,7 +96,7 @@ export const typeDefs = gql`
     editUser(email: String, password: String, name: String): User
     deleteUser(id: ID!): Boolean
     setupSettings(mode: String, interval: Int): Settings
-    updateSettings(mode: String, interval: Int, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
+    updateSettings(mode: String, interval: Int, current_plan: ID, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles
     deleteProfile(id: ID!): Boolean
     editProfile(id: ID!, name: String!, schedule: [ScheduleInput!]!): Profiles

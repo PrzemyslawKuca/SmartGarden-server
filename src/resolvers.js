@@ -35,7 +35,7 @@ export const resolvers = {
       }
       return SensorReading.find({}).exec();
     },
-    currentSensorsReading: (_, __, { res, req }) => {
+    lastSensorsReading: (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -53,6 +53,11 @@ export const resolvers = {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
+
+      if(req.body.variables.id){
+        return Profiles.find({'_id': req.body.variables.id}).exec();
+      }
+
       return Profiles.find({}).exec();
     },
   },
@@ -272,7 +277,7 @@ export const resolvers = {
         return true;
       }
     },
-    updateSettings: async (_, { mode, interval, pump, pump_fertilizer, light, fan }, { res, req }) => {
+    updateSettings: async (_, { mode, interval, pump, current_plan, pump_fertilizer, light, fan }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -280,6 +285,7 @@ export const resolvers = {
       await Settings.updateOne({}, {
         mode: mode,
         interval: interval,
+        current_plan: current_plan,
         pump: pump,
         pump_fertilizer: pump_fertilizer,
         light: light,
