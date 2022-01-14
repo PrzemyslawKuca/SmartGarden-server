@@ -1,23 +1,23 @@
-import bmp180 from 'bmp180-sensor';
+import BMP180 from 'node-bmp180';
 
-const sensor = await bmp180({
+const sensor = new BMP180.BMP180({
     address: 0x77,
-    mode: 1
-})
+    mode: BMP180.Mode.UltraHighResolution,
+    units: {
+        temperature: BMP180.TemperatureUnit.Celsius,
+        pressure: BMP180.PressureUnit.Pascal
+    }
+});
+
+
 
 export const bmp180Sensor = {
-    getTemperature: function () {
-        return new Promise((resolve, reject) => {
-            sensor.read().then((data) => {
-                resolve(data.temperature)
-            })
-        })
+    getTemperature: async function () {
+        const { temperature } = await sensor.read();
+        return parseFloat(temperature);
     },
-    getPressure: function () {
-        return new Promise((resolve, reject) => {
-            sensor.read().then((data) => {
-                resolve(data.pressure / 97.060200)
-            })
-        })
+    getPressure: async function () {
+        const { pressure } = await sensor.read();
+        return parseFloat((pressure / 100).toFixed(2));
     },
 };
