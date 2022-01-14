@@ -30,6 +30,20 @@ export const mcp3008Module = {
             });
         })
     },
+    getMoistureVoltage: function () {
+        return new Promise((resolve, reject) => {
+            const mcp3008 = spi.open(0, 0, err => {
+                if (err) throw err;
+                mcp3008.transfer(messageMoisture, (err, messageMoisture) => {
+                    if (err) throw err;
+                    const rawValue = ((messageMoisture[0].receiveBuffer[1] & 0x03) << 8) +
+                    messageMoisture[0].receiveBuffer[2];
+                    const voltage = rawValue * 3.3 / 1023;
+                    resolve(parseFloat(voltage.toFixed(2)))
+                });
+            });
+        })
+    },
     getLightLevel: function (){
         return new Promise((resolve, reject) => {
             const mcp3008 = spi.open(0, 0, err => {
@@ -41,6 +55,20 @@ export const mcp3008Module = {
                     const voltage = rawValue * 3.3 / 1023;
                     const percent = ((3.3 - voltage) / 3.3) * 100 ;
                     resolve(parseFloat(percent.toFixed(2)))
+                });
+            });
+        })
+    },
+    getLightVoltage: function (){
+        return new Promise((resolve, reject) => {
+            const mcp3008 = spi.open(0, 0, err => {
+                if (err) throw err;
+                mcp3008.transfer(messageLight, (err, messageLight) => {
+                    if (err) throw err;
+                    const rawValue = ((messageLight[0].receiveBuffer[1] & 0x03) << 8) +
+                        messageLight[0].receiveBuffer[2];
+                    const voltage = rawValue * 3.3 / 1023;
+                    resolve(parseFloat(voltage.toFixed(2)))
                 });
             });
         })
