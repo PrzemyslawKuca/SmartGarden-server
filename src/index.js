@@ -24,7 +24,7 @@ const startServer = async () => {
     context: ({ req, res }) => ({ req, res }),
   });
 
-  await mongoose.connect("mongodb+srv://SmartGarden:oNwPw0zdqTgIt413@smartgarden.yuao3.mongodb.net/smartGarden?retryWrites=true&w=majority");
+  await mongoose.connect(process.env.MONGODB_CONNECT);
 
   app.use(cookieParser());
   app.use(async (req, res, next) => {
