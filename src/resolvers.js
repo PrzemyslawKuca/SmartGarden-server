@@ -8,6 +8,8 @@ import { User } from "./models/User.js";
 import { SensorReading } from "./models/SensorReading.js";
 import { Settings } from "./models/Settings.js";
 import { Profiles } from "./models/Profiles.js";
+import { ManualProfile } from "./models/ManualProfile.js";
+import { History } from "./models/History.js";
 import { createTokens } from "./auth.js";
 import { transporter } from './helpers/nodemailer.js';
 import { registerEmailBody } from "./assets/registerEmailBody.js";
@@ -16,9 +18,9 @@ import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
 export const resolvers = {
   Query: {
     me: (_, __, { res, req }) => {
-      if (!req.userId) {
-        throw new AuthenticationError('Unauthenticated');
-      }
+      // if (!req.userId) {
+      //   throw new AuthenticationError('Unauthenticated');
+      // }
       return User.findOne({
         id: req.userId
       }).exec();
@@ -33,6 +35,17 @@ export const resolvers = {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
+
+      if(req.body.variables.start_date && req.body.variables.end_date){
+        return SensorReading.find({'created_at': {
+          $gte: req.body.variables.start_date, 
+          $lt: req.body.variables.end_date
+        }}).exec();
+
+        // return SensorReading.find({}).exec();
+
+      }
+      
       return SensorReading.find({}).exec();
     },
     lastSensorsReading: (_, __, { res, req }) => {
@@ -60,6 +73,21 @@ export const resolvers = {
 
       return Profiles.find({}).exec();
     },
+    manualProfile: (_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      return ManualProfile.find({}).exec();
+
+    },
+    history:(_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      return History.find({}).skip(req.body.variables.offset).limit(req.body.variables.limit).exec();
+    },
   },
   Mutation: {
     register: async (_, { email, password, name }) => {
@@ -75,6 +103,7 @@ export const resolvers = {
           email,
           password: hashedPassword,
           confirmed: false,
+          role: 'ADMIN',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
@@ -131,6 +160,12 @@ export const resolvers = {
         access_token: accessToken,
         refresh_token: refreshToken
       };
+    },
+    confirmProfile:async (_, { email }, { res, req }) => {
+      const { user } = jwt.verify(req.params.token, process.env.EMAIL_SECRET);
+      await User.updateOne({ 'email': user }, {confirmed: true});
+
+      return true;
     },
     resetPassword: async (_, { email }, { res, req }) => {
       const user = await User.findOne({
@@ -294,6 +329,13 @@ export const resolvers = {
       }).exec();
 
       const savedSettings = await Settings.findOne({});
+
+      if(current_plan){
+        await Profiles.updateOne({'_id': current_plan}, {
+          started_at: new Date().toISOString()
+        })
+      }
+
       return savedSettings;
     },
     addProfile: async (_, { name, schedule }, { res, req }) => {

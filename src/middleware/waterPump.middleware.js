@@ -1,11 +1,11 @@
 import rpio from 'rpio';
 
-export const waterPump = () => {
+export const waterPump = (worktime) => {
     rpio.open(16, rpio.OUTPUT, rpio.LOW);
 
     rpio.write(16, rpio.HIGH);
-    rpio.sleep(1);
+    rpio.msleep(worktime);
     rpio.write(16, rpio.LOW);
-    rpio.msleep(500);
+    // rpio.msleep(500);
 
 }

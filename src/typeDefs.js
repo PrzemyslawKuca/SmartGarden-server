@@ -11,6 +11,7 @@ export const typeDefs = gql`
     email: String!
     name: String!
     confirmed: Boolean!
+    role: String
     created_at: String!
     updated_at: String!
   }
@@ -39,12 +40,30 @@ export const typeDefs = gql`
     updated_at: String
   }
 
+  type ManualProfile{
+    id: ID
+    name: String
+    air_humidity: Float
+    soil_humidity: Float
+    air_temperature: Float
+    light: LightTimetable
+    created_at: String
+    updated_at: String
+  }
+
   type Profiles{
     id: ID
     name: String
     schedule: [Schedule]
+    started_at: String
     created_at: String
     updated_at: String
+  }
+
+  type History{
+    id: ID
+    comment: String
+    created_at: String
   }
 
   type Schedule{
@@ -82,18 +101,21 @@ export const typeDefs = gql`
   type Query {
     me: User
     users: [User]
-    sensorReads: [SensorReads]
+    sensorReads(start_date: String, end_date: String): [SensorReads]
     lastSensorsReading: SensorReads
     settings: [Settings]
     profiles(id: ID): [Profiles]
+    history(offset: Int, limit: Int): [History]
+    manualProfile: ManualProfile
   }
 
   type Mutation {
     register(email: String!, password: String!, name: String!): Boolean
     login(email: String!, password: String!): Tokens
     resetPassword(email: String!): Boolean
+    confirmProfile(email: String!): Boolean
     addUser(email: String, name: String): Boolean
-    editUser(email: String, password: String, name: String): User
+    editUser(email: String, password: String, name: String, role: String): User
     deleteUser(id: ID!): Boolean
     setupSettings(mode: String, interval: Int): Settings
     updateSettings(mode: String, interval: Int, current_plan: ID, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings

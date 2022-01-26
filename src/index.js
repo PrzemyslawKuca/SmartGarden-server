@@ -14,7 +14,8 @@ import {User} from "./models/User.js";
 import config from './config.js';
 
 import { saveSensorsRead } from "./helpers/saveSensorsRead.js";
-// import { waterPump } from "./middleware/waterPump.middleware.js";
+import {greenhouseManagement} from './helpers/greenhouseManagement.js'
+import { waterPump } from "./middleware/waterPump.middleware.js";
 
 const startServer = async () => {
   const app = express();
@@ -66,22 +67,22 @@ const startServer = async () => {
     settings = await Settings.findOne({}).exec()
   }, settings.interval * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
 
-  // setInterval(()=>{
-    // waterPump()
-  // }, 10000)
+  setInterval(()=>{
+    greenhouseManagement()
+  },  2 * 1000); // Every 10 mins = 10 * 60 * 1000
 
-  app.get('/confirmation/:token', async (req, res) => {
-    try {
-      const { user } = jwt.verify(req.params.token, process.env.EMAIL_SECRET);
-      await User.updateOne({ 'email': user }, {confirmed: true});
-    } catch (e) {
-      console.log(e)
-      return res.send('error');
-    }
+  // app.get('/confirmation/:token', async (req, res) => {
+  //   try {
+  //     const { user } = jwt.verify(req.params.token, process.env.EMAIL_SECRET);
+  //     await User.updateOne({ 'email': user }, {confirmed: true});
+  //   } catch (e) {
+  //     console.log(e)
+  //     return res.send('error');
+  //   }
   
-    // return res.redirect('http://localhost:4000/graphql');
-    return res.send('ok');
-  })
+  //   // return res.redirect('http://localhost:4000/graphql');
+  //   return res.send('ok');
+  // })
 
 
   app.listen({port: config.port}, () =>
