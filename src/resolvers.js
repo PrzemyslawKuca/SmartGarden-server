@@ -354,6 +354,39 @@ export const resolvers = {
       return profile
 
     },
+    addManualProfile: async (_, { air_humidity, soil_humidity, air_temperature, light}, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      const existingManualProfile = await ManualProfile.find({}).exec();
+
+      if(existingManualProfile.length > 0){
+        await ManualProfile.updateOne({}, {
+          air_humidity: air_humidity, 
+          soil_humidity: soil_humidity, 
+          air_temperature: air_temperature, 
+          light: light,
+          updated_at: new Date().toISOString(),
+        }).exec();
+
+        return await ManualProfile.find({}).exec();
+      }else{
+        const manualProfile = new ManualProfile({
+          air_humidity: air_humidity, 
+          soil_humidity: soil_humidity, 
+          air_temperature: air_temperature, 
+          light: light,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+        await manualProfile.save();
+  
+        return manualProfile
+      }
+
+    },
     editProfile: async (_, { id, name, schedule }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');

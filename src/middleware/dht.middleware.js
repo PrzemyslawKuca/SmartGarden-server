@@ -7,6 +7,9 @@ export const dhtSensor = {
                 if (!err) {
                     resolve(temperature)
                 }
+                else{
+                    console.log(err)
+                }
             });
         })
     },
@@ -15,6 +18,9 @@ export const dhtSensor = {
             dht.read(11, 4, function (err, temperature, humidity) {
                 if (!err) {
                     resolve(humidity)
+                }
+                else{
+                    console.log(err)
                 }
             });
         })

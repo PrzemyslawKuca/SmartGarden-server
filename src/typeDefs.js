@@ -42,7 +42,6 @@ export const typeDefs = gql`
 
   type ManualProfile{
     id: ID
-    name: String
     air_humidity: Float
     soil_humidity: Float
     air_temperature: Float
@@ -120,6 +119,7 @@ export const typeDefs = gql`
     setupSettings(mode: String, interval: Int): Settings
     updateSettings(mode: String, interval: Int, current_plan: ID, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles
+    addManualProfile(air_humidity: Int!, soil_humidity: Int!, air_temperature: Int!, light: LightTimetableInput!): ManualProfile
     deleteProfile(id: ID!): Boolean
     editProfile(id: ID!, name: String!, schedule: [ScheduleInput!]!): Profiles
   }

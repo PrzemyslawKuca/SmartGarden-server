@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 export const ManualProfile = mongoose.model("manual_profile", {
-    name: String,
     air_humidity: Number,
     soil_humidity: Number,
     air_temperature: Number,
