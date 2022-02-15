@@ -102,7 +102,7 @@ export const typeDefs = gql`
     users: [User]
     sensorReads(start_date: String, end_date: String): [SensorReads]
     lastSensorsReading: SensorReads
-    settings: [Settings]
+    settings: Settings
     profiles(id: ID): [Profiles]
     history(offset: Int, limit: Int): [History]
     manualProfile: ManualProfile

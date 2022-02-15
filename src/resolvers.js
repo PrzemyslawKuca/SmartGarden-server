@@ -60,7 +60,7 @@ export const resolvers = {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
-      return Settings.find({}).exec();
+      return Settings.findOne({}).exec();
     },
     profiles: (_, __, { res, req }) => {
       if (!req.userId) {
@@ -78,7 +78,7 @@ export const resolvers = {
         throw new AuthenticationError('Unauthenticated');
       }
 
-      return ManualProfile.find({}).exec();
+      return ManualProfile.findOne({}).exec();
 
     },
     history:(_, __, { res, req }) => {
