@@ -81,12 +81,19 @@ export const resolvers = {
       return ManualProfile.findOne({}).exec();
 
     },
-    history:(_, __, { res, req }) => {
+    history: async (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
 
-      return History.find({}).skip(req.body.variables.offset).limit(req.body.variables.limit).exec();
+      let historyData = await History.find({}).skip(req.body.variables.offset).limit(req.body.variables.limit);
+      let historyTotalaLength = await History.find({}).count().exec();
+
+      return {
+        totalLength: historyTotalaLength,
+        hasMore: historyTotalaLength > (req.body.variables.offset + req.body.variables.limit),
+        history: historyData
+      }
     },
   },
   Mutation: {

@@ -59,6 +59,12 @@ export const typeDefs = gql`
     updated_at: String
   }
 
+  type HistoryPagination{
+    totalLength: Int
+    hasMore: Boolean
+    history: [History]
+  }
+
   type History{
     id: ID
     comment: String
@@ -104,7 +110,7 @@ export const typeDefs = gql`
     lastSensorsReading: SensorReads
     settings: Settings
     profiles(id: ID): [Profiles]
-    history(offset: Int, limit: Int): [History]
+    history(offset: Int, limit: Int): HistoryPagination
     manualProfile: ManualProfile
   }
 
