@@ -12,9 +12,9 @@ export const saveSensorsRead = async () => {
     let light_level = 0;
     let cpu_temperature = 0;
 
-    // await dhtSensor.getHumidity().then((humidity) => {
-    //   air_humidity = humidity
-    // })
+    await dhtSensor.getHumidity().then((humidity) => {
+      air_humidity = humidity
+    })
 
     await mcp3008Module.getMoistureLevel().then((moisture) => {
       soil_humidity = moisture

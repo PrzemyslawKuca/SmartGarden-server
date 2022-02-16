@@ -30,15 +30,15 @@ describe("Test Sensor", () => {
             })
         })
     });
-    describe("DHT-11 sensor", () => {
-        it("Temperature is higher than -20 and lower than 60", () => {
+    describe("DHT-22 sensor", () => {
+        it("Temperature is higher than -40 and lower than 80", () => {
             return dhtSensor.getTemperature().then((temperature) => {
-                expect(temperature).to.gte(-20).to.lte(80);
+                expect(temperature).to.gte(-40).to.lte(80);
             })
         })
-        it("Humidity is higher than 5 and lower than 95", () => {
+        it("Humidity is higher than 0 and lower than 100", () => {
             return dhtSensor.getHumidity().then((humidity) => {
-                expect(humidity).to.gte(5).to.lte(90);
+                expect(humidity).to.gte(0).to.lte(100);
             })
         })
     });
