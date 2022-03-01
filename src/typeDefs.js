@@ -11,7 +11,10 @@ export const typeDefs = gql`
     email: String!
     name: String!
     confirmed: Boolean!
-    role: String
+    confirmed_by_admin: Boolean!
+    role: String!
+    notifications: Boolean!, 
+    notifications_alerts: Boolean!,
     created_at: String!
     updated_at: String!
   }
@@ -119,8 +122,9 @@ export const typeDefs = gql`
     login(email: String!, password: String!): Tokens
     resetPassword(email: String!): Boolean
     setNewPassword(token: String!, password: String!): Boolean
-    confirmProfile(email: String!): Boolean
-    addUser(email: String, name: String): Boolean
+    confirmEmail(token: String!): Boolean
+    inviteUser(email: String): Boolean
+    invitationUserRegister(token: String!, password: String!, name: String!): Boolean
     editUser(email: String, password: String, name: String, role: String): User
     deleteUser(id: ID!): Boolean
     setupSettings(mode: String, interval: Int): Settings

@@ -15,6 +15,7 @@ import { transporter } from './helpers/nodemailer.js';
 import { registerEmailBody } from "./assets/registerEmailBody.js";
 import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
 import {resetPasswordConfirmEmailBody} from './assets/resetPasswordConfirmEmailBody.js'
+import {invitationEmailBody} from './assets/invitationEmailBody.js'
 
 export const resolvers = {
   Query: {
@@ -106,29 +107,35 @@ export const resolvers = {
 
       if (user.length == 0) {
         const hashedPassword = await bcrypt.hash(password, 10);
+        const totalUsers = await User.find({}).count().exec();
+
         const newUser = new User({
           name,
           email,
           password: hashedPassword,
           confirmed: false,
-          role: 'ADMIN',
+          confirmed_by_admin: totalUsers === 0 ? true : false,
+          role: totalUsers === 0 ? 'ADMIN' : 'VISITOR',
+          notifications: false,
+          notifications_alerts: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
 
         await newUser.save(() => {
           jwt.sign({
-            user: email
+            email: email
           },
-            process.env.EMAIL_SECRET, {
-            expiresIn: '1d',
-          },
-            (err, emailToken) => {
+            process.env.EMAIL_SECRET, 
+            {},
+            (err, token) => {
+              const url = `http://localhost:3000/email-confirmation?email_token=${token}`;
+
               transporter.sendMail({
                 from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
                 to: email,
-                subject: 'Confirm Email',
-                html: registerEmailBody(emailToken),
+                subject: 'Potwierdź adres email',
+                html: registerEmailBody(url),
               });
             },
           );
@@ -156,6 +163,10 @@ export const resolvers = {
         throw new Error('User not confirmed');
       }
 
+      if (!user.confirmed_by_admin) {
+        throw new Error('User not confirmed by admin');
+      }
+
       const {
         accessToken,
         refreshToken
@@ -169,9 +180,9 @@ export const resolvers = {
         refresh_token: refreshToken
       };
     },
-    confirmProfile:async (_, { email }, { res, req }) => {
-      const { user } = jwt.verify(req.params.token, process.env.EMAIL_SECRET);
-      await User.updateOne({ 'email': user }, {confirmed: true});
+    confirmEmail: async (_, { token }, { res, req }) => {
+      const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
+      await User.updateOne({ 'email': email }, {confirmed: true});
 
       return true;
     },
@@ -187,7 +198,7 @@ export const resolvers = {
           transporter.sendMail({
             from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
             to: email,
-            subject: 'Reset password',
+            subject: 'Ustaw nowe hasło',
             html: resetPasswordEmailBody(url),
           });
         },
@@ -199,12 +210,14 @@ export const resolvers = {
       try {
         const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
         const hashedPassword = await bcrypt.hash(password, 10);
+        const url = `http://localhost:3000/login`;
+
         await User.updateOne({ 'email': email }, {password: hashedPassword}).then(()=>{
           transporter.sendMail({
             from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
             to: email,
-            subject: 'Reset password confirmation',
-            html: resetPasswordConfirmEmailBody(),
+            subject: 'Potwierdzenie zmiany hasła',
+            html: resetPasswordConfirmEmailBody(url),
           });
         });
         return true;
@@ -275,7 +288,7 @@ export const resolvers = {
       }
 
     },
-    addUser: async (_, { email, name }, { res, req }) => {
+    inviteUser: async (_, { email}, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -284,48 +297,55 @@ export const resolvers = {
         'email': email
       }).exec();
 
-      if (user.length == 0) {
-        let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let passwordLength = 12;
-        let password = "";
+      if (user.length != 0) {
+        throw new AuthenticationError('User exists');
+      }
 
-        for (var i = 0; i <= passwordLength; i++) {
-          var randomNumber = Math.floor(Math.random() * chars.length);
-          password += chars.substring(randomNumber, randomNumber + 1);
-        }
+      await jwt.sign({
+        email: email
+      },
+        process.env.EMAIL_SECRET, {
+        expiresIn: '1d',
+      },
+        (err, token) => {
+          const url = `http://localhost:3000/invitation?invitation_token=${token}`;
 
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: email,
+            subject: 'Zaproszenie do systemu',
+            html: invitationEmailBody(url),
+          });
+        },
+      );
+
+      return true;
+    },
+    invitationUserRegister: async (_, { token, name, password }, { res, req }) => {
+      try {
+        const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
         const hashedPassword = await bcrypt.hash(password, 10);
+        const totalUsers = await User.find({}).count().exec();
 
         const newUser = new User({
           name,
           email,
           password: hashedPassword,
-          confirmed: false,
+          confirmed: true,
+          confirmed_by_admin: true,
+          role: totalUsers === 0 ? 'ADMIN' : 'VISITOR',
+          notifications: false,
+          notifications_alerts: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
 
-        await newUser.save(() => {
-          jwt.sign({
-            user: email
-          },
-            process.env.EMAIL_SECRET, {
-            expiresIn: '1d',
-          },
-            (err, emailToken) => {
-              const url = `http://localhost:4000/confirmation/${emailToken}`;
-
-              transporter.sendMail({
-                from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
-                to: email,
-                subject: 'Confirm Email',
-                html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
-              });
-            },
-          );
-        });
-
+        await newUser.save();
+        
         return true;
+      } catch (e) {
+        console.log(e)
+        return false;
       }
     },
     updateSettings: async (_, { mode, interval, pump, current_plan, pump_fertilizer, light, fan }, { res, req }) => {
