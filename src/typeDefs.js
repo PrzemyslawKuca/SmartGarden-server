@@ -118,6 +118,7 @@ export const typeDefs = gql`
     register(email: String!, password: String!, name: String!): Boolean
     login(email: String!, password: String!): Tokens
     resetPassword(email: String!): Boolean
+    setNewPassword(token: String!, password: String!): Boolean
     confirmProfile(email: String!): Boolean
     addUser(email: String, name: String): Boolean
     editUser(email: String, password: String, name: String, role: String): User

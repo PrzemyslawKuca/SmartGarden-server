@@ -61,15 +61,20 @@ const startServer = async () => {
   });  
 
   let settings = await Settings.findOne({}).exec()
-  
-  setInterval(async() => {
+
+  async function sensorsRead(){
     saveSensorsRead()
     settings = await Settings.findOne({}).exec()
-  }, settings.interval * 60 * 1000); // Every 10 mins = 10 * 60 * 1000
+    setTimeout(sensorsRead, settings.interval * 60 * 1000)
+  }
 
-  setInterval(()=>{
+  async function management(){
     greenhouseManagement()
-  },  2 * 1000); // Every 10 mins = 10 * 60 * 1000
+    setTimeout(management, 10 * 60 * 1000) // Every 10 mins = 10 * 60 * 1000
+  }
+
+  sensorsRead()
+  management()
 
   // app.get('/confirmation/:token', async (req, res) => {
   //   try {

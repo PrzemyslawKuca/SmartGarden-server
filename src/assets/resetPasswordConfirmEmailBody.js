@@ -1,4 +1,4 @@
-export const resetPasswordEmailBody = (url) => {
+export const resetPasswordConfirmEmailBody = () => {
     return (
         `<!DOCTYPE html>
         <html>
@@ -10,9 +10,7 @@ export const resetPasswordEmailBody = (url) => {
             </head>
             <body>
                 <div style="background: #f6f8f1; text-align: center; padding: 0 0 100px 0;">
-                    <h1 style="padding: 30px 0 15px 0; color: #000;">Utworzono nowe hasło do twojego konta!</h1>
-                    <a href="${url}" style="color: #fff; background-color: #064635; border-color: #064635; width: 100%; height: 48px; padding: 12px 32px; border-radius: 24px; text-decoration: none;">Zmień hasło</a>
-                    <p>Link jest ważny 24h</p>
+                    <h1 style="padding: 30px 0 15px 0; color: #000;">Twoje hasło zostało zmienione!</h1>
                 </div>
             </body>
         </html>`

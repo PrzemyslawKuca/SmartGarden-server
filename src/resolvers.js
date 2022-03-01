@@ -14,6 +14,7 @@ import { createTokens } from "./auth.js";
 import { transporter } from './helpers/nodemailer.js';
 import { registerEmailBody } from "./assets/registerEmailBody.js";
 import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
+import {resetPasswordConfirmEmailBody} from './assets/resetPasswordConfirmEmailBody.js'
 
 export const resolvers = {
   Query: {
@@ -174,35 +175,43 @@ export const resolvers = {
 
       return true;
     },
-    resetPassword: async (_, { email }, { res, req }) => {
-      const user = await User.findOne({
-        'email': email
-      }).exec();
-
-      let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      let passwordLength = 12;
-      let password = "";
-
-      for (var i = 0; i <= passwordLength; i++) {
-        var randomNumber = Math.floor(Math.random() * chars.length);
-        password += chars.substring(randomNumber, randomNumber + 1);
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      await User.updateOne({
-        '_id': user._id
-      }, {
-        password: hashedPassword
-      });
-
-      transporter.sendMail({
-        to: email,
-        subject: 'Reset password',
-        html: resetPasswordEmailBody(password),
-      });
+    resetPassword: (_, { email }, { res, req }) => {
+      jwt.sign({
+        email: email
+      },
+        process.env.EMAIL_SECRET, {
+        expiresIn: '1d',
+      },
+        (err, token) => {
+          const url = `http://localhost:3000/reset-password?reset_token=${token}`;
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: email,
+            subject: 'Reset password',
+            html: resetPasswordEmailBody(url),
+          });
+        },
+      );
 
       return true;
+    },
+    setNewPassword: async (_, {token, password}, { res, req }) => {
+      try {
+        const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await User.updateOne({ 'email': email }, {password: hashedPassword}).then(()=>{
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: email,
+            subject: 'Reset password confirmation',
+            html: resetPasswordConfirmEmailBody(),
+          });
+        });
+        return true;
+      } catch (e) {
+        console.log(e)
+        return false;
+      }
     },
     editUser: async (_, { name, email, password }, { res, req }) => {
       if (!req.userId) {

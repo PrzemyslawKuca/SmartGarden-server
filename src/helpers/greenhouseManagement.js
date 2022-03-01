@@ -17,9 +17,9 @@ export const greenhouseManagement = async () => {
     let light_level = 0;
     let cpu_temperature = 0;
 
-    // await dhtSensor.getHumidity().then((humidity) => {
-    //   air_humidity = humidity
-    // })
+    await dhtSensor.getHumidity().then((humidity) => {
+      air_humidity = humidity
+    })
 
     await mcp3008Module.getMoistureLevel().then((moisture) => {
       soil_humidity = moisture
@@ -46,6 +46,11 @@ export const greenhouseManagement = async () => {
     if(settings[0].mode === 'plan'){
         const profiles = await Profiles.find({'_id': settings[0].current_plan}).exec()
         // console.log(profiles)
+    }
+
+    if(settings[0].mode === 'manual'){
+      // const profiles = await Profiles.find({'_id': settings[0].current_plan}).exec()
+      // console.log(profiles)
     }
 
     // waterPump(25)
