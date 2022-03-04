@@ -16,6 +16,7 @@ import { registerEmailBody } from "./assets/registerEmailBody.js";
 import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
 import {resetPasswordConfirmEmailBody} from './assets/resetPasswordConfirmEmailBody.js'
 import {invitationEmailBody} from './assets/invitationEmailBody.js'
+import {removeUserEmailBody} from './assets/removeUserEmailBody.js'
 
 export const resolvers = {
   Query: {
@@ -279,14 +280,24 @@ export const resolvers = {
     },
     deleteUser: async (_, { id }, { res, req }) => {
       try {
+        const user = await User.findOne({
+          _id: id
+        });
+
         await User.deleteOne({
           _id: id
-        }).exec();
+        }).then(()=>{
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: user.email,
+            subject: 'Twoje konto zostało usunięte',
+            html: removeUserEmailBody(),
+          });
+        });
         return true;
       } catch {
         return false;
       }
-
     },
     inviteUser: async (_, { email}, { res, req }) => {
       if (!req.userId) {
