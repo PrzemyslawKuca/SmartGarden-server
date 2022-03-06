@@ -21,11 +21,12 @@ import {removeUserEmailBody} from './assets/removeUserEmailBody.js'
 export const resolvers = {
   Query: {
     me: (_, __, { res, req }) => {
-      // if (!req.userId) {
-      //   throw new AuthenticationError('Unauthenticated');
-      // }
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
       return User.findOne({
-        id: req.userId
+        _id: req.userId
       }).exec();
     },
     users: (_, __, { res, req }) => {
@@ -173,8 +174,8 @@ export const resolvers = {
         refreshToken
       } = createTokens(user);
 
-      res.cookie("refresh-token", refreshToken);
-      res.cookie("access-token", accessToken);
+      // res.cookie("refresh-token", refreshToken);
+      // res.cookie("access-token", accessToken);
 
       return {
         access_token: accessToken,
@@ -227,7 +228,7 @@ export const resolvers = {
         return false;
       }
     },
-    editUser: async (_, { name, email, password }, { res, req }) => {
+    editUser: async (_, { name, email, password, notifications, notifications_alerts }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -236,14 +237,15 @@ export const resolvers = {
         email: email
       });
 
-      if (req.userId != emailExist.id) {
+      if (emailExist && req.userId != emailExist.id) {
         throw new Error("Email exists")
       }
-
 
       await User.updateOne({
         _id: req.userId
       }, {
+        notifications: notifications, 
+        notifications_alerts: notifications_alerts,
         name: name,
         email: email,
         password: password
@@ -253,6 +255,36 @@ export const resolvers = {
         _id: req.userId
       });
       return savedUser;
+    },
+    editUserPermission: async (_, { id, role, confirmed_by_admin }, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      const emailExist = await User.findOne({
+        _id: id
+      });
+
+      if (!emailExist) {
+        throw new Error("User does not exists")
+      }
+
+      const user = await User.findOne({
+        _id: req.userId
+      });
+
+      if (user.role !== 'ADMIN') {
+        throw new Error("Not permitted")
+      }
+
+      await User.updateOne({
+        _id: id
+      }, {
+        role: role,
+        confirmed_by_admin: confirmed_by_admin
+      });
+
+      return true;
     },
     setupSettings: async (_, { mode, interval }, { res, req }) => {
       if (!req.userId) {
