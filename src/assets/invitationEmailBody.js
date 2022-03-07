@@ -3,7 +3,7 @@ export const invitationEmailBody = (url) => {
         `<!DOCTYPE html>
         <html>
             <head>
-                <title>Potwierdzenie Rejestracji</title>
+                <title>Zaproszenie do systemu</title>
                 <style type="text/css">
                     body {margin: 0; padding: 0; min-width: 100%!important;}
                 </style>

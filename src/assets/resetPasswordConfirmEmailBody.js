@@ -3,7 +3,7 @@ export const resetPasswordConfirmEmailBody = (url) => {
         `<!DOCTYPE html>
         <html>
             <head>
-                <title>Utworzenie nowego hasła!</title>
+                <title>Potwierdzenie utworzenia nowego hasła</title>
                 <style type="text/css">
                     body {margin: 0; padding: 0; min-width: 100%!important;}
                 </style>

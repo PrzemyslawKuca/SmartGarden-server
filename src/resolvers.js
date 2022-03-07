@@ -90,7 +90,7 @@ export const resolvers = {
         throw new AuthenticationError('Unauthenticated');
       }
 
-      let historyData = await History.find({}).skip(req.body.variables.offset).limit(req.body.variables.limit);
+      let historyData = await History.find({}).sort({created_at: -1}).skip(req.body.variables.offset).limit(req.body.variables.limit);
       let historyTotalaLength = await History.find({}).count().exec();
 
       return {

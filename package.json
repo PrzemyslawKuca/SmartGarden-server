@@ -1,6 +1,6 @@
 {
   "name": "smartgarden",
-  "version": "0.5.4",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "test": "mocha src/test/index.js --reporter spec --timeout 2000",
@@ -28,6 +28,7 @@
     "graphql": "^15.7.2",
     "jsonwebtoken": "^8.5.1",
     "mocha": "^9.1.3",
+    "moment": "^2.29.1",
     "mongoose": "^6.0.11",
     "node-bmp180": "^1.1.0",
     "node-dht-sensor": "^0.4.3",

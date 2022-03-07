@@ -10,12 +10,16 @@ import cookieParser from "cookie-parser";
 import { typeDefs } from "./typeDefs.js";
 import { resolvers } from "./resolvers.js";
 import { Settings } from "./models/Settings.js";
-import {User} from "./models/User.js";
+import { User } from "./models/User.js";
 import config from './config.js';
 
 import { saveSensorsRead } from "./helpers/saveSensorsRead.js";
-import {greenhouseManagement} from './helpers/greenhouseManagement.js'
-import { waterPump } from "./middleware/waterPump.middleware.js";
+import { greenhouseManagement } from './helpers/greenhouseManagement.js'
+import { transporter } from './helpers/nodemailer.js';
+
+import { statsEmailBody } from './assets/statsEmailBody.js';
+import moment from 'moment';
+import { SensorReading } from './models/SensorReading.js';
 
 const startServer = async () => {
   const app = express();
@@ -73,22 +77,46 @@ const startServer = async () => {
     setTimeout(management, 10 * 60 * 1000) // Every 10 mins = 10 * 60 * 1000
   }
 
+  function emailNotifications(){
+    let now = new Date();
+    let delay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0) - now;
+    if (delay < 0) {
+      delay += 86400000; 
+    }
+
+    setTimeout(async ()=>{
+      let users = await User.find({}).exec();
+
+      let yesterday = moment().add(-1, 'days').toISOString();
+      let sensorsData = await SensorReading.find({created_at: { "$gte": yesterday }});
+
+      let max_temeprature = sensorsData.reduce((acc, item) => acc = acc > item.air_temperature ? acc : item.air_temperature);
+      let min_temeprature = sensorsData.reduce((acc, item) => acc = acc < item.air_temperature ? acc : item.air_temperature);
+
+      let max_humidity = sensorsData.reduce((acc, item) => acc = acc > item.air_humidity ? acc : item.air_humidity);
+      let min_humidity = sensorsData.reduce((acc, item) => acc = acc < item.air_humidity ? acc : item.air_humidity);
+      
+      let max_soil_humidity = sensorsData.reduce((acc, item) => acc = acc > item.soil_humidity ? acc : item.soil_humidity);
+      let min_soil_humidity = sensorsData.reduce((acc, item) => acc = acc < item.soil_humidity ? acc : item.soil_humidity);
+
+      let formatDateForDisplay = moment(now).format('DD.MM.YYYY')
+
+      users.map((user)=>{
+        if(user.notifications){
+          transporter.sendMail({
+          from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+          to: user.email,
+          subject: `Powiadomienie dziene: ${formatDateForDisplay}`,
+          html: statsEmailBody(formatDateForDisplay, max_temeprature, min_temeprature, max_humidity, min_humidity, max_soil_humidity, min_soil_humidity),
+        });
+        }
+      })
+    }, delay)
+  }
+
   sensorsRead()
   management()
-
-  // app.get('/confirmation/:token', async (req, res) => {
-  //   try {
-  //     const { user } = jwt.verify(req.params.token, process.env.EMAIL_SECRET);
-  //     await User.updateOne({ 'email': user }, {confirmed: true});
-  //   } catch (e) {
-  //     console.log(e)
-  //     return res.send('error');
-  //   }
-  
-  //   // return res.redirect('http://localhost:4000/graphql');
-  //   return res.send('ok');
-  // })
-
+  emailNotifications()
 
   app.listen({port: config.port}, () =>
           console.log(`🚀 Server ready at http://localhost:${config.port}${server.graphqlPath}`)

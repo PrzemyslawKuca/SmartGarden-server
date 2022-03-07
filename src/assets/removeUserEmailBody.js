@@ -3,7 +3,7 @@ export const removeUserEmailBody = () => {
         `<!DOCTYPE html>
         <html>
             <head>
-                <title>Potwierdzenie Rejestracji</title>
+                <title>Potwierdzenie usunięcia</title>
                 <style type="text/css">
                     body {margin: 0; padding: 0; min-width: 100%!important;}
                 </style>
