@@ -66,7 +66,7 @@ export const resolvers = {
       }
       return Settings.findOne({}).exec();
     },
-    profiles: (_, __, { res, req }) => {
+    profile: async (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -76,6 +76,20 @@ export const resolvers = {
       }
 
       return Profiles.find({}).exec();
+    },
+    profiles: async (_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      let profilesData = await Profiles.find({}).skip(req.body.variables.offset).limit(req.body.variables.limit);
+      let profilesTotalaLength = await Profiles.find({}).count().exec();
+
+      return {
+        totalLength: profilesTotalaLength,
+        hasMore: profilesTotalaLength > (req.body.variables.offset + req.body.variables.limit),
+        profiles: profilesData
+      }
     },
     manualProfile: (_, __, { res, req }) => {
       if (!req.userId) {

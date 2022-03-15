@@ -62,6 +62,12 @@ export const typeDefs = gql`
     updated_at: String
   }
 
+  type ProfilesPagination{
+    totalLength: Int
+    hasMore: Boolean
+    profiles: [Profiles]
+  }
+
   type HistoryPagination{
     totalLength: Int
     hasMore: Boolean
@@ -112,7 +118,8 @@ export const typeDefs = gql`
     sensorReads(start_date: String, end_date: String): [SensorReads]
     lastSensorsReading: SensorReads
     settings: Settings
-    profiles(id: ID): [Profiles]
+    profile(id: ID): [Profiles]
+    profiles(offset: Int, limit: Int): ProfilesPagination
     history(offset: Int, limit: Int): HistoryPagination
     manualProfile: ManualProfile
   }

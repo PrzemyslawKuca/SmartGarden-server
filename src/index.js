@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import express from "express";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import cors from 'cors';
 
 import { typeDefs } from "./typeDefs.js";
 import { resolvers } from "./resolvers.js";
@@ -117,6 +118,8 @@ const startServer = async () => {
   sensorsRead()
   management()
   emailNotifications()
+
+  app.use(cors())
 
   app.listen({port: config.port}, () =>
           console.log(`🚀 Server ready at http://localhost:${config.port}${server.graphqlPath}`)
