@@ -11,6 +11,10 @@ export const typeDefs = gql`
     email: String!
     name: String!
     confirmed: Boolean!
+    confirmed_by_admin: Boolean!
+    role: String!
+    notifications: Boolean!, 
+    notifications_alerts: Boolean!,
     created_at: String!
     updated_at: String!
   }
@@ -39,12 +43,43 @@ export const typeDefs = gql`
     updated_at: String
   }
 
+  type ManualProfile{
+    id: ID
+    air_humidity: Float
+    soil_humidity: Float
+    air_temperature: Float
+    light: LightTimetable
+    fertilizer: Int,
+    fertilizer_interval: Int,
+    created_at: String
+    updated_at: String
+  }
+
   type Profiles{
     id: ID
     name: String
     schedule: [Schedule]
+    started_at: String
     created_at: String
     updated_at: String
+  }
+
+  type ProfilesPagination{
+    totalLength: Int
+    hasMore: Boolean
+    profiles: [Profiles]
+  }
+
+  type HistoryPagination{
+    totalLength: Int
+    hasMore: Boolean
+    history: [History]
+  }
+
+  type History{
+    id: ID
+    comment: String
+    created_at: String
   }
 
   type Schedule{
@@ -82,22 +117,30 @@ export const typeDefs = gql`
   type Query {
     me: User
     users: [User]
-    sensorReads: [SensorReads]
+    sensorReads(start_date: String, end_date: String): [SensorReads]
     lastSensorsReading: SensorReads
-    settings: [Settings]
-    profiles(id: ID): [Profiles]
+    settings: Settings
+    profile(id: ID): [Profiles]
+    profiles(offset: Int, limit: Int): ProfilesPagination
+    history(offset: Int, limit: Int): HistoryPagination
+    manualProfile: ManualProfile
   }
 
   type Mutation {
     register(email: String!, password: String!, name: String!): Boolean
     login(email: String!, password: String!): Tokens
     resetPassword(email: String!): Boolean
-    addUser(email: String, name: String): Boolean
-    editUser(email: String, password: String, name: String): User
+    setNewPassword(token: String!, password: String!): Boolean
+    confirmEmail(token: String!): Boolean
+    inviteUser(email: String): Boolean
+    invitationUserRegister(token: String!, password: String!, name: String!): Boolean
+    editUser(email: String, password: String, name: String, notifications: Boolean, notifications_alerts: Boolean): User
+    editUserPermission(id: ID!, role: String, confirmed_by_admin: Boolean): Boolean
     deleteUser(id: ID!): Boolean
     setupSettings(mode: String, interval: Int): Settings
     updateSettings(mode: String, interval: Int, current_plan: ID, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles
+    addManualProfile(air_humidity: Int, soil_humidity: Int, air_temperature: Int, light: LightTimetableInput, fertilizer: Int, fertilizer_interval: Int): ManualProfile
     deleteProfile(id: ID!): Boolean
     editProfile(id: ID!, name: String!, schedule: [ScheduleInput!]!): Profiles
   }

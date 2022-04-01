@@ -9,7 +9,9 @@ export const createTokens = (user) => {
             expiresIn: "7d"
         }
     );
-    const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, {
+
+    let date = new Date();
+    const accessToken = jwt.sign({ id: user.id, expire_in: date.setDate(date.getDate() + 1)}, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1d"
     });
 

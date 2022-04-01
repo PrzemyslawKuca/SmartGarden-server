@@ -14,6 +14,7 @@ export const Profiles = mongoose.model("profiles", {
         },
         duration: String,
     }],
+    started_at: String,
     created_at: String,
     updated_at: String
 });

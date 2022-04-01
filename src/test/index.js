@@ -13,7 +13,7 @@ const userData = {
     email: 'lef27531@zwoho.com',
     password: '123',
     name: 'Jan',
-    accesToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxZDc2MDAyNmE4NzdlMzZkZWRlMzBiYyIsImlhdCI6MTY0MjE2MzM5OCwiZXhwIjoxNjQyMjQ5Nzk4fQ.zkqI47oAWSjWBCYjflr1lUqCV26QPGSEEivdbt7DfmU',
+    accesToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxZDc2MDAyNmE4NzdlMzZkZWRlMzBiYyIsImlhdCI6MTY0MzE1MzEyOSwiZXhwIjoxNjQzMjM5NTI5fQ.UVTU3N4KQPpW1ecOHgbddgDv1KUEOXoHS9HD_-zRgFw',
     refreshToken: ''
 }
 
@@ -30,15 +30,15 @@ describe("Test Sensor", () => {
             })
         })
     });
-    describe("DHT-11 sensor", () => {
-        it("Temperature is higher than -20 and lower than 60", () => {
+    describe("DHT-22 sensor", () => {
+        it("Temperature is higher than -40 and lower than 80", () => {
             return dhtSensor.getTemperature().then((temperature) => {
-                expect(temperature).to.gte(-20).to.lte(80);
+                expect(temperature).to.gte(-40).to.lte(80);
             })
         })
-        it("Humidity is higher than 5 and lower than 95", () => {
+        it("Humidity is higher than 0 and lower than 100", () => {
             return dhtSensor.getHumidity().then((humidity) => {
-                expect(humidity).to.gte(5).to.lte(90);
+                expect(humidity).to.gte(0).to.lte(100);
             })
         })
     });
@@ -78,54 +78,51 @@ describe("Test Request", () => {
         .expect(200)
         .end((error, response) => {
             expect(response.status).to.equal(200);
-            expect(response.body.data.sensorReads).to.be.an('array')
+            // expect(response.body.data.sensorReads).to.be.an('array')
          })
 
     });
 
-    it("lastSensorsReading", async () => {
-        request('http://localhost:4000').post('/graphql')
-        .set('Authorization', `Bearer ${userData.accesToken}`)
-        .send({ query: '{lastSensorsReading { id air_humidity soil_humidity air_temperature air_pressure light_level cpu_temperature created_at}}' })
-        .expect(200)
-        .end((error, response) => {
-            expect(response.status).to.equal(200);
-         })
-
-    });
+    // it("lastSensorsReading", async () => {
+    //     request('http://localhost:4000').post('/graphql')
+    //     .set('Authorization', `Bearer ${userData.accesToken}`)
+    //     .send({ query: '{lastSensorsReading { id air_humidity soil_humidity air_temperature air_pressure light_level cpu_temperature created_at}}' })
+    //     .expect(200)
+    //     .end((error, response) => {
+    //         expect(response.status).to.equal(200);
+    //      })
+    // });
 })
 
 
 describe("Test Query Format", () => {
-    let tester;
+    let tester = new EasyGraphQLTester(typeDefs, resolvers)
 
-    before(() => {
-        tester = new EasyGraphQLTester(typeDefs, resolvers)
-    })
-
-    it("sensorReads", () => {
+    it("settings Query", () => {
         const validQuery  = `
             query Query {
-                sensorReads{
-                    id
-                    air_humidity
-                    soil_humidity
-                    air_temperature
-                    air_pressure
-                    light_level
-                    cpu_temperature
+                settings {
+                    mode
+                    current_plan
+                    interval
+                    current_plan
+                    pump
+                    pump_fertilizer
+                    light
+                    fan
+                    
                     created_at
-                }
+                    updated_at
+                  }
             }
         `
         tester.test(true, validQuery)
     })
 
-    it("lastSensorsReading", () => {
+    it("lastSensorsReading Query", () => {
         const validQuery  = `
             query Query {
                 lastSensorsReading{
-                    id
                     air_humidity
                     soil_humidity
                     air_temperature
@@ -141,13 +138,10 @@ describe("Test Query Format", () => {
 })
 
 describe("Test Mutation Format", () => {
-    let tester;
+    let tester = new EasyGraphQLTester(typeDefs)
 
-    before(() => {
-        tester = new EasyGraphQLTester(typeDefs)
-    })
 
-    it("Register", () => {
+    it("Register Mutation", () => {
         const mutation = `
             mutation Mutation($email: String!, $password: String!, $name: String!) {
                 register(email: $email, password: $password, name: $name)
@@ -156,7 +150,7 @@ describe("Test Mutation Format", () => {
         tester.mock(mutation, {email: userData.email, password: userData.password, name: userData.name})
     })
 
-    it("Login", () => {
+    it("Login Mutation", () => {
         const mutation = `
             mutation Mutation($email: String!, $password: String!) {
                 login(email: $email, password: $password){

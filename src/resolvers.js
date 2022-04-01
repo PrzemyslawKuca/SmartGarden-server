@@ -8,10 +8,15 @@ import { User } from "./models/User.js";
 import { SensorReading } from "./models/SensorReading.js";
 import { Settings } from "./models/Settings.js";
 import { Profiles } from "./models/Profiles.js";
+import { ManualProfile } from "./models/ManualProfile.js";
+import { History } from "./models/History.js";
 import { createTokens } from "./auth.js";
 import { transporter } from './helpers/nodemailer.js';
 import { registerEmailBody } from "./assets/registerEmailBody.js";
 import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
+import {resetPasswordConfirmEmailBody} from './assets/resetPasswordConfirmEmailBody.js'
+import {invitationEmailBody} from './assets/invitationEmailBody.js'
+import {removeUserEmailBody} from './assets/removeUserEmailBody.js'
 
 export const resolvers = {
   Query: {
@@ -19,8 +24,9 @@ export const resolvers = {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
+
       return User.findOne({
-        id: req.userId
+        _id: req.userId
       }).exec();
     },
     users: (_, __, { res, req }) => {
@@ -33,6 +39,17 @@ export const resolvers = {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
+
+      if(req.body.variables.start_date && req.body.variables.end_date){
+        return SensorReading.find({'created_at': {
+          $gte: req.body.variables.start_date, 
+          $lt: req.body.variables.end_date
+        }}).exec();
+
+        // return SensorReading.find({}).exec();
+
+      }
+      
       return SensorReading.find({}).exec();
     },
     lastSensorsReading: (_, __, { res, req }) => {
@@ -47,9 +64,9 @@ export const resolvers = {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
-      return Settings.find({}).exec();
+      return Settings.findOne({}).exec();
     },
-    profiles: (_, __, { res, req }) => {
+    profile: async (_, __, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -59,6 +76,42 @@ export const resolvers = {
       }
 
       return Profiles.find({}).exec();
+    },
+    profiles: async (_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      let profilesData = await Profiles.find({}).skip(req.body.variables.offset).limit(req.body.variables.limit);
+      let profilesTotalaLength = await Profiles.find({}).count().exec();
+
+      return {
+        totalLength: profilesTotalaLength,
+        hasMore: profilesTotalaLength > (req.body.variables.offset + req.body.variables.limit),
+        profiles: profilesData
+      }
+    },
+    manualProfile: (_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      return ManualProfile.findOne({}).exec();
+
+    },
+    history: async (_, __, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      let historyData = await History.find({}).sort({created_at: -1}).skip(req.body.variables.offset).limit(req.body.variables.limit);
+      let historyTotalaLength = await History.find({}).count().exec();
+
+      return {
+        totalLength: historyTotalaLength,
+        hasMore: historyTotalaLength > (req.body.variables.offset + req.body.variables.limit),
+        history: historyData
+      }
     },
   },
   Mutation: {
@@ -70,28 +123,35 @@ export const resolvers = {
 
       if (user.length == 0) {
         const hashedPassword = await bcrypt.hash(password, 10);
+        const totalUsers = await User.find({}).count().exec();
+
         const newUser = new User({
           name,
           email,
           password: hashedPassword,
           confirmed: false,
+          confirmed_by_admin: totalUsers === 0 ? true : false,
+          role: totalUsers === 0 ? 'ADMIN' : 'VISITOR',
+          notifications: false,
+          notifications_alerts: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
 
         await newUser.save(() => {
           jwt.sign({
-            user: email
+            email: email
           },
-            process.env.EMAIL_SECRET, {
-            expiresIn: '1d',
-          },
-            (err, emailToken) => {
+            process.env.EMAIL_SECRET, 
+            {},
+            (err, token) => {
+              const url = `http://localhost:3000/email-confirmation?email_token=${token}`;
+
               transporter.sendMail({
                 from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
                 to: email,
-                subject: 'Confirm Email',
-                html: registerEmailBody(emailToken),
+                subject: 'Potwierdź adres email',
+                html: registerEmailBody(url),
               });
             },
           );
@@ -119,50 +179,70 @@ export const resolvers = {
         throw new Error('User not confirmed');
       }
 
+      if (!user.confirmed_by_admin) {
+        throw new Error('User not confirmed by admin');
+      }
+
       const {
         accessToken,
         refreshToken
       } = createTokens(user);
 
-      res.cookie("refresh-token", refreshToken);
-      res.cookie("access-token", accessToken);
+      // res.cookie("refresh-token", refreshToken);
+      // res.cookie("access-token", accessToken);
 
       return {
         access_token: accessToken,
         refresh_token: refreshToken
       };
     },
-    resetPassword: async (_, { email }, { res, req }) => {
-      const user = await User.findOne({
-        'email': email
-      }).exec();
-
-      let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      let passwordLength = 12;
-      let password = "";
-
-      for (var i = 0; i <= passwordLength; i++) {
-        var randomNumber = Math.floor(Math.random() * chars.length);
-        password += chars.substring(randomNumber, randomNumber + 1);
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      await User.updateOne({
-        '_id': user._id
-      }, {
-        password: hashedPassword
-      });
-
-      transporter.sendMail({
-        to: email,
-        subject: 'Reset password',
-        html: resetPasswordEmailBody(password),
-      });
+    confirmEmail: async (_, { token }, { res, req }) => {
+      const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
+      await User.updateOne({ 'email': email }, {confirmed: true});
 
       return true;
     },
-    editUser: async (_, { name, email, password }, { res, req }) => {
+    resetPassword: (_, { email }, { res, req }) => {
+      jwt.sign({
+        email: email
+      },
+        process.env.EMAIL_SECRET, {
+        expiresIn: '1d',
+      },
+        (err, token) => {
+          const url = `http://localhost:3000/reset-password?reset_token=${token}`;
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: email,
+            subject: 'Ustaw nowe hasło',
+            html: resetPasswordEmailBody(url),
+          });
+        },
+      );
+
+      return true;
+    },
+    setNewPassword: async (_, {token, password}, { res, req }) => {
+      try {
+        const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const url = `http://localhost:3000/login`;
+
+        await User.updateOne({ 'email': email }, {password: hashedPassword}).then(()=>{
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: email,
+            subject: 'Potwierdzenie zmiany hasła',
+            html: resetPasswordConfirmEmailBody(url),
+          });
+        });
+        return true;
+      } catch (e) {
+        console.log(e)
+        return false;
+      }
+    },
+    editUser: async (_, { name, email, password, notifications, notifications_alerts }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -171,14 +251,15 @@ export const resolvers = {
         email: email
       });
 
-      if (req.userId != emailExist.id) {
+      if (emailExist && req.userId != emailExist.id) {
         throw new Error("Email exists")
       }
-
 
       await User.updateOne({
         _id: req.userId
       }, {
+        notifications: notifications, 
+        notifications_alerts: notifications_alerts,
         name: name,
         email: email,
         password: password
@@ -188,6 +269,36 @@ export const resolvers = {
         _id: req.userId
       });
       return savedUser;
+    },
+    editUserPermission: async (_, { id, role, confirmed_by_admin }, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      const emailExist = await User.findOne({
+        _id: id
+      });
+
+      if (!emailExist) {
+        throw new Error("User does not exists")
+      }
+
+      const user = await User.findOne({
+        _id: req.userId
+      });
+
+      if (user.role !== 'ADMIN') {
+        throw new Error("Not permitted")
+      }
+
+      await User.updateOne({
+        _id: id
+      }, {
+        role: role,
+        confirmed_by_admin: confirmed_by_admin
+      });
+
+      return true;
     },
     setupSettings: async (_, { mode, interval }, { res, req }) => {
       if (!req.userId) {
@@ -215,16 +326,26 @@ export const resolvers = {
     },
     deleteUser: async (_, { id }, { res, req }) => {
       try {
+        const user = await User.findOne({
+          _id: id
+        });
+
         await User.deleteOne({
           _id: id
-        }).exec();
+        }).then(()=>{
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: user.email,
+            subject: 'Twoje konto zostało usunięte',
+            html: removeUserEmailBody(),
+          });
+        });
         return true;
       } catch {
         return false;
       }
-
     },
-    addUser: async (_, { email, name }, { res, req }) => {
+    inviteUser: async (_, { email}, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -233,48 +354,55 @@ export const resolvers = {
         'email': email
       }).exec();
 
-      if (user.length == 0) {
-        let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let passwordLength = 12;
-        let password = "";
+      if (user.length != 0) {
+        throw new AuthenticationError('User exists');
+      }
 
-        for (var i = 0; i <= passwordLength; i++) {
-          var randomNumber = Math.floor(Math.random() * chars.length);
-          password += chars.substring(randomNumber, randomNumber + 1);
-        }
+      await jwt.sign({
+        email: email
+      },
+        process.env.EMAIL_SECRET, {
+        expiresIn: '1d',
+      },
+        (err, token) => {
+          const url = `http://localhost:3000/invitation?invitation_token=${token}`;
 
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: email,
+            subject: 'Zaproszenie do systemu',
+            html: invitationEmailBody(url),
+          });
+        },
+      );
+
+      return true;
+    },
+    invitationUserRegister: async (_, { token, name, password }, { res, req }) => {
+      try {
+        const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
         const hashedPassword = await bcrypt.hash(password, 10);
+        const totalUsers = await User.find({}).count().exec();
 
         const newUser = new User({
           name,
           email,
           password: hashedPassword,
-          confirmed: false,
+          confirmed: true,
+          confirmed_by_admin: true,
+          role: totalUsers === 0 ? 'ADMIN' : 'VISITOR',
+          notifications: false,
+          notifications_alerts: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
 
-        await newUser.save(() => {
-          jwt.sign({
-            user: email
-          },
-            process.env.EMAIL_SECRET, {
-            expiresIn: '1d',
-          },
-            (err, emailToken) => {
-              const url = `http://localhost:4000/confirmation/${emailToken}`;
-
-              transporter.sendMail({
-                from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
-                to: email,
-                subject: 'Confirm Email',
-                html: `Please click this email to confirm your email: <a href="${url}">${url}</a>`,
-              });
-            },
-          );
-        });
-
+        await newUser.save();
+        
         return true;
+      } catch (e) {
+        console.log(e)
+        return false;
       }
     },
     updateSettings: async (_, { mode, interval, pump, current_plan, pump_fertilizer, light, fan }, { res, req }) => {
@@ -294,6 +422,13 @@ export const resolvers = {
       }).exec();
 
       const savedSettings = await Settings.findOne({});
+
+      if(current_plan){
+        await Profiles.updateOne({'_id': current_plan}, {
+          started_at: new Date().toISOString()
+        })
+      }
+
       return savedSettings;
     },
     addProfile: async (_, { name, schedule }, { res, req }) => {
@@ -310,6 +445,43 @@ export const resolvers = {
       await profile.save();
 
       return profile
+
+    },
+    addManualProfile: async (_, { air_humidity, soil_humidity, air_temperature, light, fertilizer, fertilizer_interval}, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      const existingManualProfile = await ManualProfile.find({}).exec();
+
+      if(existingManualProfile.length > 0){
+        await ManualProfile.updateOne({}, {
+          air_humidity: air_humidity, 
+          soil_humidity: soil_humidity, 
+          air_temperature: air_temperature, 
+          light: light,
+          fertilizer: fertilizer,
+          fertilizer_interval: fertilizer_interval,
+          updated_at: new Date().toISOString(),
+        }).exec();
+
+        return await ManualProfile.find({}).exec();
+      }else{
+        const manualProfile = new ManualProfile({
+          air_humidity: air_humidity, 
+          soil_humidity: soil_humidity, 
+          air_temperature: air_temperature, 
+          light: light,
+          fertilizer: fertilizer,
+          fertilizer_interval: fertilizer_interval,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+        await manualProfile.save();
+  
+        return manualProfile
+      }
 
     },
     editProfile: async (_, { id, name, schedule }, { res, req }) => {
