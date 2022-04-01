@@ -10,6 +10,8 @@ export const ManualProfile = mongoose.model("manual_profile", {
         end_hour: String,
         minimumLevel: Number,
     },
+    fertilizer: Number,
+    fertilizer_interval: Number,
     created_at: String,
     updated_at: String
 });

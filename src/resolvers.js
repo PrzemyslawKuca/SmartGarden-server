@@ -447,7 +447,7 @@ export const resolvers = {
       return profile
 
     },
-    addManualProfile: async (_, { air_humidity, soil_humidity, air_temperature, light}, { res, req }) => {
+    addManualProfile: async (_, { air_humidity, soil_humidity, air_temperature, light, fertilizer, fertilizer_interval}, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -460,6 +460,8 @@ export const resolvers = {
           soil_humidity: soil_humidity, 
           air_temperature: air_temperature, 
           light: light,
+          fertilizer: fertilizer,
+          fertilizer_interval: fertilizer_interval,
           updated_at: new Date().toISOString(),
         }).exec();
 
@@ -470,6 +472,8 @@ export const resolvers = {
           soil_humidity: soil_humidity, 
           air_temperature: air_temperature, 
           light: light,
+          fertilizer: fertilizer,
+          fertilizer_interval: fertilizer_interval,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
