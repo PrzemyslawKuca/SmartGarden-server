@@ -8,6 +8,8 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
 
+import rpio from 'rpio';
+
 import { typeDefs } from "./typeDefs.js";
 import { resolvers } from "./resolvers.js";
 import { Settings } from "./models/Settings.js";
@@ -124,6 +126,23 @@ const startServer = async () => {
   app.listen({port: config.port}, () =>
           console.log(`🚀 Server ready at http://localhost:${config.port}${server.graphqlPath}`)
   );
+
+  process.stdin.resume();
+
+  function cleanup() {
+    rpio.open(13, rpio.OUTPUT, rpio.HIGH);
+    rpio.open(15, rpio.OUTPUT, rpio.HIGH);
+    rpio.open(16, rpio.OUTPUT, rpio.HIGH);
+    rpio.open(18, rpio.OUTPUT, rpio.HIGH);
+    process.exit();
+  }
+
+  process.on('exit', cleanup);
+  process.on('SIGINT', cleanup);
+  process.on('SIGUSR1', cleanup);
+  process.on('SIGUSR2', cleanup);
+  process.on('uncaughtException', cleanup);
+
 };
 
 startServer();
