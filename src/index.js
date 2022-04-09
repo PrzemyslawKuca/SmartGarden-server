@@ -82,7 +82,7 @@ const startServer = async () => {
     setTimeout(management, 5 * 60 * 1000) // Every 10 mins = 10 * 60 * 1000
   }
 
-  async function emailNotifications(){
+  async function fertilizerDosage(){
     let now = new Date();
     let delay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0) - now;
     let userDealy = await ManualProfile.findOne({}).exec()
@@ -94,8 +94,8 @@ const startServer = async () => {
       fertilizerPump(userDealy.fertilizer)
     }, delay)
   }
-
-  function fertilizerDosage(){
+  
+  function emailNotifications(){
     let now = new Date();
     let delay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0) - now;
     if (delay < 0) {
