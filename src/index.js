@@ -23,6 +23,8 @@ import { transporter } from './helpers/nodemailer.js';
 import { statsEmailBody } from './assets/statsEmailBody.js';
 import moment from 'moment';
 import { SensorReading } from './models/SensorReading.js';
+import { ManualProfile } from "./models/ManualProfile.js";
+import { fertilizerPump } from "./middleware/fertilizerPump.middleware.js";
 
 const startServer = async () => {
   const app = express();
@@ -80,9 +82,22 @@ const startServer = async () => {
     setTimeout(management, 5 * 60 * 1000) // Every 10 mins = 10 * 60 * 1000
   }
 
-  function emailNotifications(){
+  async function emailNotifications(){
     let now = new Date();
     let delay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0) - now;
+    let userDealy = await ManualProfile.findOne({}).exec()
+    if (delay < 0) {
+      delay += userDealy.fertilizer_interval * 86400000; 
+    }
+
+    setTimeout(async ()=>{
+      fertilizerPump(userDealy.fertilizer)
+    }, delay)
+  }
+
+  function fertilizerDosage(){
+    let now = new Date();
+    let delay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0) - now;
     if (delay < 0) {
       delay += 86400000; 
     }
@@ -120,6 +135,7 @@ const startServer = async () => {
   sensorsRead()
   management()
   emailNotifications()
+  fertilizerDosage()
 
   app.use(cors())
 

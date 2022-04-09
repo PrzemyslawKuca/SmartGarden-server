@@ -6,5 +6,4 @@ export const fertilizerPump = (worktime) => {
     rpio.write(18, rpio.LOW);
     rpio.msleep(worktime);
     rpio.write(18, rpio.HIGH);
-    // rpio.msleep(500);
 }
