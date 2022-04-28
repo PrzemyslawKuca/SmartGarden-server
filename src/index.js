@@ -7,6 +7,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
+import helmet from 'helmet';
 
 import rpio from 'rpio';
 
@@ -137,7 +138,8 @@ const startServer = async () => {
   emailNotifications()
   fertilizerDosage()
 
-  app.use(cors())
+  app.use(cors());
+  app.use(helmet());
 
   app.listen({port: config.port}, () =>
           console.log(`🚀 Server ready at http://localhost:${config.port}${server.graphqlPath}`)

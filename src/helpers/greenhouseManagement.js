@@ -80,7 +80,7 @@ export const greenhouseManagement = async () => {
       }
 
       if(soil_humidity < manualProfile.soil_humidity && settings[0].pump){
-        waterPump(250)
+        waterPump(500)
       }
 
       if(air_temperature > manualProfile.air_temperature && settings[0].fan){
