@@ -28,7 +28,7 @@ export const greenhouseManagement = async () => {
       soil_humidity = moisture
     })
 
-    await bmp180Sensor.getTemperature().then((temperature) => {
+    await dhtSensor.getTemperature().then((temperature) => {
       air_temperature = temperature
     })
 

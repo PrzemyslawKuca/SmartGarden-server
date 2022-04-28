@@ -53,7 +53,7 @@ export const saveSensorsRead = async () => {
       checkValues(moisture, 0, 100, 'Wilgotność gleby')
     })
 
-    await bmp180Sensor.getTemperature().then((temperature) => {
+    await dhtSensor.getTemperature().then((temperature) => {
       air_temperature = temperature
       checkValues(temperature, -40, 85, 'Temperatura powietrza')
     })
