@@ -4,6 +4,10 @@ import {dhtSensor} from '../middleware/dht.middleware.js';
 import fs from "fs";
 import {SensorReading} from "../models/SensorReading.js";
 import {History} from '../models/History.js';
+import { transporter } from './nodemailer.js';
+import moment from 'moment';
+import {dangerEmailBody} from '../assets/dangerEmailBody.js'
+import { User } from "../models/User.js";
 
 async function checkValues(value, min, max, comment){
   if(value > max || value < min){
@@ -13,6 +17,21 @@ async function checkValues(value, min, max, comment){
     });
 
     await newHistory.save()
+
+    let formatDateForDisplay = moment(now).format('DD.MM.YYYY')
+    let users = await User.find({}).exec();
+
+    users.map((user)=>{
+      if(user.notifications_alerts){
+        console.log(user.email)
+        transporter.sendMail({
+          from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+          to: user.email,
+          subject: 'Możliwe uszkodzenie jednego z czujników',
+          html: dangerEmailBody(formatDateForDisplay, comment),
+        });
+      }
+    })
   }
 }
 

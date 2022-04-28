@@ -3,6 +3,7 @@ dotenv.config()
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import rpio from 'rpio';
 import { AuthenticationError } from 'apollo-server-express';
 import { User } from "./models/User.js";
 import { SensorReading } from "./models/SensorReading.js";
@@ -408,6 +409,22 @@ export const resolvers = {
     updateSettings: async (_, { mode, interval, pump, current_plan, pump_fertilizer, light, fan }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
+      }
+
+      if(!pump){
+        rpio.open(16, rpio.OUTPUT, rpio.HIGH);
+      }
+
+      if(!pump_fertilizer){
+        rpio.open(18, rpio.OUTPUT, rpio.HIGH);
+      }
+
+      if(!light){
+        rpio.open(13, rpio.OUTPUT, rpio.HIGH);
+      }
+
+      if(!fan){
+        rpio.open(15, rpio.OUTPUT, rpio.HIGH);
       }
 
       await Settings.updateOne({}, {
