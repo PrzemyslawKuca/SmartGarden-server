@@ -4,7 +4,7 @@ import {History} from '../models/History.js';
 export const dhtSensor = {
     getTemperature: function () {
         return new Promise((resolve, reject) => {
-            dht.read(22, 4, function (err, temperature) {
+            dht.read(22, 4, function (err, temperature, humidity) {
                 if (!err) {
                     resolve(temperature.toFixed(2))
                 }
@@ -20,7 +20,7 @@ export const dhtSensor = {
     },
     getHumidity: function () {
         return new Promise((resolve, reject) => {
-            dht.read(22, 4, function (err, humidity) {
+            dht.read(22, 4, function (err, temperature, humidity) {
                 if (!err) {
                     resolve(humidity)
                 }

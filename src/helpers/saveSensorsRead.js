@@ -16,21 +16,20 @@ async function checkValues(value, min, max, comment){
       created_at: new Date().toISOString(),
     });
 
-    await newHistory.save()
+    await newHistory.save(async () => {
+      let formatDateForDisplay = moment(now).format('DD.MM.YYYY')
+      let users = await User.find({}).exec();
 
-    let formatDateForDisplay = moment(now).format('DD.MM.YYYY')
-    let users = await User.find({}).exec();
-
-    users.map((user)=>{
-      if(user.notifications_alerts){
-        console.log(user.email)
-        transporter.sendMail({
-          from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
-          to: user.email,
-          subject: 'Możliwe uszkodzenie jednego z czujników',
-          html: dangerEmailBody(formatDateForDisplay, comment),
-        });
-      }
+      users.map((user)=>{
+        if(user.notifications_alerts){
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: user.email,
+            subject: 'Możliwe uszkodzenie jednego z czujników',
+            html: dangerEmailBody(formatDateForDisplay, comment),
+          });
+        }
+      })
     })
   }
 }
