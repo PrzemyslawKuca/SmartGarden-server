@@ -19,6 +19,11 @@ import {resetPasswordConfirmEmailBody} from './assets/resetPasswordConfirmEmailB
 import {invitationEmailBody} from './assets/invitationEmailBody.js'
 import {removeUserEmailBody} from './assets/removeUserEmailBody.js'
 
+import { waterPump } from "./middleware/waterPump.middleware.js";
+import { light } from "./middleware/light.middleware.js";
+import { fan } from "./middleware/fan.middleware.js";
+import { fertilizerPump } from "./middleware/fertilizerPump.middleware.js";
+
 export const resolvers = {
   Query: {
     me: (_, __, { res, req }) => {
@@ -500,6 +505,37 @@ export const resolvers = {
         return manualProfile
       }
 
+    },
+    manualControl: async (_, { pump, pump_fertilizer, fan, light}, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      if(fan !== 0){
+        fan(fan)
+      }
+
+      if(pump !== 0){
+        waterPump(pump)
+      }
+
+      if(light){
+        light(light);
+      }
+
+      if(pump_fertilizer !== 0){
+        fertilizerPump(pump_fertilizer)
+      }
+    },
+    emergencyStop: async (_, { stop }, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      rpio.open(13, rpio.OUTPUT, rpio.HIGH);
+      rpio.open(15, rpio.OUTPUT, rpio.HIGH);
+      rpio.open(16, rpio.OUTPUT, rpio.HIGH);
+      rpio.open(18, rpio.OUTPUT, rpio.HIGH);
     },
     editProfile: async (_, { id, name, schedule }, { res, req }) => {
       if (!req.userId) {

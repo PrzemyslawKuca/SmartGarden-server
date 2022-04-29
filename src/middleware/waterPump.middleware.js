@@ -4,8 +4,8 @@ export const waterPump = (worktime) => {
     rpio.open(16, rpio.OUTPUT, rpio.LOW);
 
     rpio.write(16, rpio.LOW);
-    setInterval(()=>{
+    setTimeout(()=>{
         rpio.write(16, rpio.HIGH);
-    }, worktime)
+    }, worktime * 22)
  
 }

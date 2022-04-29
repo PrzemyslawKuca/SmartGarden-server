@@ -141,6 +141,8 @@ export const typeDefs = gql`
     updateSettings(mode: String, interval: Int, current_plan: ID, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles
     addManualProfile(air_humidity: Int, soil_humidity: Int, air_temperature: Int, light: LightTimetableInput, fertilizer: Int, fertilizer_interval: Int): ManualProfile
+    manualControl(pump: Int, pump_fertilizer: Int, fan: Int, light: Boolean): Boolean
+    emergencyStop(stop: Boolean): Boolean
     deleteProfile(id: ID!): Boolean
     editProfile(id: ID!, name: String!, schedule: [ScheduleInput!]!): Profiles
   }

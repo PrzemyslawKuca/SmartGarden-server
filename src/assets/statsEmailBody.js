@@ -19,8 +19,8 @@ export const statsEmailBody = (date, max_temeprature, min_temeprature, max_humid
                     <p>Wilgotność powietrza maksymalna: <b>${max_humidity.toFixed(2)}</b></p>
                     <p>Wilgotność powietrza minimalna: <b>${min_humidity.toFixed(2)}</b></p>
                     <br/>
-                    <p>Wilgotność powietrza maksymalna: <b>${max_soil_humidity.toFixed(2)}</b></p>
-                    <p>Wilgotność powietrza minimalna: <b>${min_soil_humidity.toFixed(2)}</b></p>
+                    <p>Wilgotność gleby maksymalna: <b>${max_soil_humidity.toFixed(2)}</b></p>
+                    <p>Wilgotność gleby minimalna: <b>${min_soil_humidity.toFixed(2)}</b></p>
                 </div>
             </body>
         </html>`
