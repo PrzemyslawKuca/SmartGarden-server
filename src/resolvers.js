@@ -21,7 +21,7 @@ import {removeUserEmailBody} from './assets/removeUserEmailBody.js'
 
 import { waterPump } from "./middleware/waterPump.middleware.js";
 import { light } from "./middleware/light.middleware.js";
-import { fan } from "./middleware/fan.middleware.js";
+import { fan as runFan } from "./middleware/fan.middleware.js";
 import { fertilizerPump } from "./middleware/fertilizerPump.middleware.js";
 
 export const resolvers = {
@@ -512,7 +512,7 @@ export const resolvers = {
       }
 
       if(fan !== 0){
-        fan(fan)
+        runFan(fan)
       }
 
       if(pump !== 0){
