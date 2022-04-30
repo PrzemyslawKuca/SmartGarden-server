@@ -10,7 +10,7 @@ export const dhtSensor = {
                 }
                 else{
                     const newHistory= new History({
-                        comment: `DHT22: Czujnik temperatury powietrza nie odpowiada`,
+                        comment: `DHT22: Czujnik temperatury powietrza nie odpowiada. Error: ${err}`,
                         created_at: new Date().toISOString(),
                       });
                     newHistory.save()
@@ -26,7 +26,7 @@ export const dhtSensor = {
                 }
                 else{
                     const newHistory= new History({
-                        comment: `DHT22: Czujnik wilgotności powietrza nie odpowiada`,
+                        comment: `DHT22: Czujnik wilgotności powietrza nie odpowiada. Error: ${err}`,
                         created_at: new Date().toISOString(),
                       });
                     newHistory.save()

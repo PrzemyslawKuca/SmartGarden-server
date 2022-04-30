@@ -13,6 +13,7 @@ import {getCurrentHour, calculateDaysBetween} from '../helpers/timeFormat.js';
 import { waterPump } from "../middleware/waterPump.middleware.js";
 import { light } from "../middleware/light.middleware.js";
 import { fan } from "../middleware/fan.middleware.js";
+import {History} from '../models/History.js';
 
 export const greenhouseManagement = async () => {
     let air_humidity = 0;
@@ -54,20 +55,46 @@ export const greenhouseManagement = async () => {
         if(currentStage){
           if(air_humidity < profiles[0].schedule[currentStage].air_humidity && settings[0].fan){
             fan(10)
+            const newHistory= new History({
+              comment: `Plan: Uruchomiono wentylację`,
+              created_at: new Date().toISOString(),
+            });
+            await newHistory.save()
           }
     
           if(soil_humidity < profiles[0].schedule[currentStage].soil_humidity && settings[0].pump){
             waterPump(50)
+            const newHistory= new History({
+              comment: `Plan: Uruchomiono pompe wody (50ml)`,
+              created_at: new Date().toISOString(),
+            });
+            await newHistory.save()
           }
     
           if(air_temperature < profiles[0].schedule[currentStage].air_temperature && settings[0].fan){
             fan(10)
+            const newHistory= new History({
+              comment: `Plan: Uruchomiono wentylację`,
+              created_at: new Date().toISOString(),
+            });
+            await newHistory.save()
           }
     
           if(light_level < profiles[0].schedule[currentStage].light_level && getCurrentHour() > profiles[0].schedule[currentStage].light.start_hour && getCurrentHour() < profiles[0].schedule[currentStage].light.end_hour && settings[0].light){
-            light(true);
+            light(true)
+            const newHistory= new History({
+              comment: `Plan: Włączono oświetlenie`,
+              created_at: new Date().toISOString(),
+            });
+            await newHistory.save()
+          
           }else{
-            light(false);
+            light(false)
+              const newHistory= new History({
+                comment: `Plan: Wyłączono oświetlenie`,
+                created_at: new Date().toISOString(),
+              });
+              await newHistory.save()
           }
         }
     }
@@ -77,20 +104,46 @@ export const greenhouseManagement = async () => {
 
       if(air_humidity > manualProfile.air_humidity && settings[0].fan){
         fan(10)
+        const newHistory= new History({
+          comment: `Plan manualny: Uruchomiono wentylację`,
+          created_at: new Date().toISOString(),
+        });
+        await newHistory.save()
       }
 
       if(soil_humidity < manualProfile.soil_humidity && settings[0].pump){
         waterPump(50)
+        const newHistory= new History({
+          comment: `Plan manualny: Uruchomiono pompe wody (50ml)`,
+          created_at: new Date().toISOString(),
+        });
+        await newHistory.save()
       }
 
       if(air_temperature > manualProfile.air_temperature && settings[0].fan){
         fan(10)
+        const newHistory= new History({
+          comment: `Plan manualny: Uruchomiono wentylację`,
+          created_at: new Date().toISOString(),
+        });
+        await newHistory.save()
       }
 
       if(light_level < manualProfile.light.minimumLevel && getCurrentHour() > manualProfile.light.start_hour && getCurrentHour() < manualProfile.light.end_hour && settings[0].light){
-        light(true);
+        light(true)
+          const newHistory= new History({
+            comment: `Plan manualny: Włączono oświetlenie`,
+            created_at: new Date().toISOString(),
+          });
+          await newHistory.save()
+        
       }else{
-        light(false);
+        light(false)
+          const newHistory= new History({
+            comment: `Plan manualny: Wyłączono oświetlenie`,
+            created_at: new Date().toISOString(),
+          });
+          await newHistory.save()
       }
     }
 

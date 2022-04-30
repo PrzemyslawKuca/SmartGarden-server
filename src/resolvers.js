@@ -443,6 +443,12 @@ export const resolvers = {
         updated_at: new Date().toISOString()
       }).exec();
 
+      const newHistory= new History({
+        comment: `Zmieniono tryb pracy na: ${mode}`,
+        created_at: new Date().toISOString(),
+      });
+      await newHistory.save()
+
       const savedSettings = await Settings.findOne({});
 
       if(current_plan){
