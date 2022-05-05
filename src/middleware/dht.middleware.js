@@ -6,7 +6,7 @@ export const dhtSensor = {
         return new Promise((resolve, reject) => {
             dht.read(22, 4, function (err, temperature, humidity) {
                 if (!err) {
-                    resolve(temperature.toFixed(2))
+                    resolve(temperature)
                 }
                 else{
                     const newHistory= new History({

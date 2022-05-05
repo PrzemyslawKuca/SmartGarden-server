@@ -82,19 +82,19 @@ export const greenhouseManagement = async () => {
     
           if(light_level < profiles[0].schedule[currentStage].light_level && getCurrentHour() > profiles[0].schedule[currentStage].light.start_hour && getCurrentHour() < profiles[0].schedule[currentStage].light.end_hour && settings[0].light){
             light(true)
-            const newHistory= new History({
-              comment: `Plan: Włączono oświetlenie`,
-              created_at: new Date().toISOString(),
-            });
-            await newHistory.save()
+            // const newHistory= new History({
+            //   comment: `Plan: Włączono oświetlenie`,
+            //   created_at: new Date().toISOString(),
+            // });
+            // await newHistory.save()
           
           }else{
             light(false)
-              const newHistory= new History({
-                comment: `Plan: Wyłączono oświetlenie`,
-                created_at: new Date().toISOString(),
-              });
-              await newHistory.save()
+              // const newHistory= new History({
+              //   comment: `Plan: Wyłączono oświetlenie`,
+              //   created_at: new Date().toISOString(),
+              // });
+              // await newHistory.save()
           }
         }
     }
@@ -131,19 +131,19 @@ export const greenhouseManagement = async () => {
 
       if(light_level < manualProfile.light.minimumLevel && getCurrentHour() > manualProfile.light.start_hour && getCurrentHour() < manualProfile.light.end_hour && settings[0].light){
         light(true)
-          const newHistory= new History({
-            comment: `Plan manualny: Włączono oświetlenie`,
-            created_at: new Date().toISOString(),
-          });
-          await newHistory.save()
+          // const newHistory= new History({
+          //   comment: `Plan manualny: Włączono oświetlenie`,
+          //   created_at: new Date().toISOString(),
+          // });
+          // await newHistory.save()
         
       }else{
         light(false)
-          const newHistory= new History({
-            comment: `Plan manualny: Wyłączono oświetlenie`,
-            created_at: new Date().toISOString(),
-          });
-          await newHistory.save()
+          // const newHistory= new History({
+          //   comment: `Plan manualny: Wyłączono oświetlenie`,
+          //   created_at: new Date().toISOString(),
+          // });
+          // await newHistory.save()
       }
     }
 

@@ -53,7 +53,7 @@ export const saveSensorsRead = async () => {
     })
 
     await dhtSensor.getTemperature().then((temperature) => {
-      air_temperature = temperature
+      air_temperature = temperature.toFixed(2)
       checkValues(temperature, -40, 85, 'Temperatura powietrza')
     })
 
