@@ -91,9 +91,13 @@ const startServer = async () => {
       delay += userDealy.fertilizer_interval * 86400000; 
     }
 
-    setTimeout(async ()=>{
-      fertilizerPump(userDealy.fertilizer)
-    }, delay)
+    const settings = await Settings.find({}).exec()
+
+    if(settings[0].pump_fertilizer){
+      setTimeout(async ()=>{
+        fertilizerPump(userDealy.fertilizer)
+      }, delay)
+    }
   }
   
   function emailNotifications(){
