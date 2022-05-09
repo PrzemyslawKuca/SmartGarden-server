@@ -129,6 +129,7 @@ export const typeDefs = gql`
   type Mutation {
     register(email: String!, password: String!, name: String!): Boolean
     login(email: String!, password: String!): Tokens
+    refreshToken(refresh_token: String!): Tokens
     resetPassword(email: String!): Boolean
     setNewPassword(token: String!, password: String!): Boolean
     confirmEmail(token: String!): Boolean
@@ -141,6 +142,8 @@ export const typeDefs = gql`
     updateSettings(mode: String, interval: Int, current_plan: ID, pump: Boolean, pump_fertilizer: Boolean, light: Boolean, fan: Boolean): Settings
     addProfile(name: String!, schedule: [ScheduleInput!]!): Profiles
     addManualProfile(air_humidity: Int, soil_humidity: Int, air_temperature: Int, light: LightTimetableInput, fertilizer: Int, fertilizer_interval: Int): ManualProfile
+    manualControl(pump: Int, pump_fertilizer: Int, fan: Int, light: Boolean): Boolean
+    emergencyStop(stop: Boolean): Boolean
     deleteProfile(id: ID!): Boolean
     editProfile(id: ID!, name: String!, schedule: [ScheduleInput!]!): Profiles
   }

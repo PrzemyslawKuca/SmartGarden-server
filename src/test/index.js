@@ -13,7 +13,7 @@ const userData = {
     email: 'lef27531@zwoho.com',
     password: '123',
     name: 'Jan',
-    accesToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxZDc2MDAyNmE4NzdlMzZkZWRlMzBiYyIsImlhdCI6MTY0MzE1MzEyOSwiZXhwIjoxNjQzMjM5NTI5fQ.UVTU3N4KQPpW1ecOHgbddgDv1KUEOXoHS9HD_-zRgFw',
+    accesToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyMWU3NzJiZjIzOWUzNDkwZjRjY2VjNSIsImV4cGlyZV9pbiI6MTY1MTcwNjIxMjE5MSwiaWF0IjoxNjUxNjE5ODEyLCJleHAiOjE2NTE3MDYyMTJ9.j8PUQCYmpt4TDDPe3cZjAa8QZHLL9U7Q1TyaYr1BlLU',
     refreshToken: ''
 }
 
@@ -78,7 +78,7 @@ describe("Test Request", () => {
         .expect(200)
         .end((error, response) => {
             expect(response.status).to.equal(200);
-            // expect(response.body.data.sensorReads).to.be.an('array')
+            expect(response.body.data.sensorReads).to.be.an('array')
          })
 
     });
@@ -110,7 +110,6 @@ describe("Test Query Format", () => {
                     pump_fertilizer
                     light
                     fan
-                    
                     created_at
                     updated_at
                   }

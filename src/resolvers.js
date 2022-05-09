@@ -3,6 +3,7 @@ dotenv.config()
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import rpio from 'rpio';
 import { AuthenticationError } from 'apollo-server-express';
 import { User } from "./models/User.js";
 import { SensorReading } from "./models/SensorReading.js";
@@ -17,6 +18,11 @@ import {resetPasswordEmailBody} from './assets/resetPasswordEmailBody.js'
 import {resetPasswordConfirmEmailBody} from './assets/resetPasswordConfirmEmailBody.js'
 import {invitationEmailBody} from './assets/invitationEmailBody.js'
 import {removeUserEmailBody} from './assets/removeUserEmailBody.js'
+
+import { waterPump } from "./middleware/waterPump.middleware.js";
+import { light } from "./middleware/light.middleware.js";
+import { fan as runFan } from "./middleware/fan.middleware.js";
+import { fertilizerPump } from "./middleware/fertilizerPump.middleware.js";
 
 export const resolvers = {
   Query: {
@@ -188,13 +194,29 @@ export const resolvers = {
         refreshToken
       } = createTokens(user);
 
-      // res.cookie("refresh-token", refreshToken);
-      // res.cookie("access-token", accessToken);
-
       return {
         access_token: accessToken,
         refresh_token: refreshToken
       };
+    },
+    refreshToken: async (_, { refresh_token }, { res, req }) => {
+      if (refresh_token) {
+        const {expire_in, id} = jwt.decode(refresh_token)
+
+        const user = await User.findOne({
+          'ID': id
+        }).exec();
+
+        const {
+          accessToken,
+          refreshToken
+        } = createTokens(user);
+
+        return {
+          access_token: accessToken,
+          refresh_token: refreshToken
+        };
+      }
     },
     confirmEmail: async (_, { token }, { res, req }) => {
       const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
@@ -410,6 +432,22 @@ export const resolvers = {
         throw new AuthenticationError('Unauthenticated');
       }
 
+      if(!pump){
+        rpio.open(16, rpio.OUTPUT, rpio.HIGH);
+      }
+
+      if(!pump_fertilizer){
+        rpio.open(18, rpio.OUTPUT, rpio.HIGH);
+      }
+
+      if(!light){
+        rpio.open(13, rpio.OUTPUT, rpio.HIGH);
+      }
+
+      if(!fan){
+        rpio.open(15, rpio.OUTPUT, rpio.HIGH);
+      }
+
       await Settings.updateOne({}, {
         mode: mode,
         interval: interval,
@@ -422,6 +460,12 @@ export const resolvers = {
       }).exec();
 
       const savedSettings = await Settings.findOne({});
+
+      const newHistory= new History({
+        comment: `Zmieniono tryb pracy na: ${savedSettings.mode}`,
+        created_at: new Date().toISOString(),
+      });
+      await newHistory.save()
 
       if(current_plan){
         await Profiles.updateOne({'_id': current_plan}, {
@@ -483,6 +527,37 @@ export const resolvers = {
         return manualProfile
       }
 
+    },
+    manualControl: async (_, { pump, pump_fertilizer, fan, light}, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      if(fan !== 0){
+        runFan(fan)
+      }
+
+      if(pump !== 0){
+        waterPump(pump)
+      }
+
+      if(light){
+        light(light);
+      }
+
+      if(pump_fertilizer !== 0){
+        fertilizerPump(pump_fertilizer)
+      }
+    },
+    emergencyStop: async (_, { stop }, { res, req }) => {
+      if (!req.userId) {
+        throw new AuthenticationError('Unauthenticated');
+      }
+
+      rpio.open(13, rpio.OUTPUT, rpio.HIGH);
+      rpio.open(15, rpio.OUTPUT, rpio.HIGH);
+      rpio.open(16, rpio.OUTPUT, rpio.HIGH);
+      rpio.open(18, rpio.OUTPUT, rpio.HIGH);
     },
     editProfile: async (_, { id, name, schedule }, { res, req }) => {
       if (!req.userId) {

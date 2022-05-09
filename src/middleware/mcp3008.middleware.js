@@ -30,7 +30,7 @@ export const mcp3008Module = {
                     }
                     else{
                         const newHistory= new History({
-                            comment: `mcp3008: Czujnik wilgotności gleby nie odpowiada`,
+                            comment: `mcp3008: Czujnik wilgotności gleby nie odpowiada. Error: ${err}`,
                             created_at: new Date().toISOString(),
                         });
                         newHistory.save()
@@ -67,7 +67,7 @@ export const mcp3008Module = {
                         resolve(parseFloat(percent.toFixed(2)))
                     }else{
                         const newHistory= new History({
-                            comment: `mcp3008: Czujnik oświetlenia nie odpowiada`,
+                            comment: `mcp3008: Czujnik oświetlenia nie odpowiada. Error: ${err}`,
                             created_at: new Date().toISOString(),
                         });
                         newHistory.save()

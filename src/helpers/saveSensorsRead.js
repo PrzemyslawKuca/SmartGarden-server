@@ -4,6 +4,10 @@ import {dhtSensor} from '../middleware/dht.middleware.js';
 import fs from "fs";
 import {SensorReading} from "../models/SensorReading.js";
 import {History} from '../models/History.js';
+import { transporter } from './nodemailer.js';
+import moment from 'moment';
+import {dangerEmailBody} from '../assets/dangerEmailBody.js'
+import { User } from "../models/User.js";
 
 async function checkValues(value, min, max, comment){
   if(value > max || value < min){
@@ -12,7 +16,21 @@ async function checkValues(value, min, max, comment){
       created_at: new Date().toISOString(),
     });
 
-    await newHistory.save()
+    await newHistory.save(async () => {
+      let formatDateForDisplay = moment(now).format('DD.MM.YYYY')
+      let users = await User.find({}).exec();
+
+      await users.map((user)=>{
+        if(user.notifications_alerts){
+          transporter.sendMail({
+            from: '"Smart Garden" <smartfarmpwsz@gmail.com>',
+            to: user.email,
+            subject: 'Możliwe uszkodzenie jednego z czujników',
+            html: dangerEmailBody(formatDateForDisplay, comment),
+          });
+        }
+      })
+    })
   }
 }
 
@@ -34,8 +52,8 @@ export const saveSensorsRead = async () => {
       checkValues(moisture, 0, 100, 'Wilgotność gleby')
     })
 
-    await bmp180Sensor.getTemperature().then((temperature) => {
-      air_temperature = temperature
+    await dhtSensor.getTemperature().then((temperature) => {
+      air_temperature = temperature.toFixed(2)
       checkValues(temperature, -40, 85, 'Temperatura powietrza')
     })
 

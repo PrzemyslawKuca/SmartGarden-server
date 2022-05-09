@@ -7,6 +7,9 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
+import helmet from 'helmet';
+
+import rpio from 'rpio';
 
 import { typeDefs } from "./typeDefs.js";
 import { resolvers } from "./resolvers.js";
@@ -21,6 +24,8 @@ import { transporter } from './helpers/nodemailer.js';
 import { statsEmailBody } from './assets/statsEmailBody.js';
 import moment from 'moment';
 import { SensorReading } from './models/SensorReading.js';
+import { ManualProfile } from "./models/ManualProfile.js";
+import { fertilizerPump } from "./middleware/fertilizerPump.middleware.js";
 
 const startServer = async () => {
   const app = express();
@@ -75,12 +80,29 @@ const startServer = async () => {
 
   async function management(){
     greenhouseManagement()
-    setTimeout(management, 5 * 60 * 1000) // Every 10 mins = 10 * 60 * 1000
+    setTimeout(management, 15 * 60 * 1000) // Every 15 mins = 15 * 60 * 1000
   }
 
-  function emailNotifications(){
+  async function fertilizerDosage(){
     let now = new Date();
     let delay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0) - now;
+    let userDealy = await ManualProfile.findOne({}).exec()
+    if (delay < 0) {
+      delay += userDealy.fertilizer_interval * 86400000; 
+    }
+
+    const settings = await Settings.find({}).exec()
+
+    if(settings[0].pump_fertilizer){
+      setTimeout(async ()=>{
+        fertilizerPump(userDealy.fertilizer)
+      }, delay)
+    }
+  }
+  
+  function emailNotifications(){
+    let now = new Date();
+    let delay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0) - now;
     if (delay < 0) {
       delay += 86400000; 
     }
@@ -118,12 +140,31 @@ const startServer = async () => {
   sensorsRead()
   management()
   emailNotifications()
+  fertilizerDosage()
 
-  app.use(cors())
+  app.use(cors());
+  app.use(helmet());
 
   app.listen({port: config.port}, () =>
           console.log(`🚀 Server ready at http://localhost:${config.port}${server.graphqlPath}`)
   );
+
+  process.stdin.resume();
+
+  function cleanup() {
+    rpio.open(13, rpio.OUTPUT, rpio.HIGH);
+    rpio.open(15, rpio.OUTPUT, rpio.HIGH);
+    rpio.open(16, rpio.OUTPUT, rpio.HIGH);
+    rpio.open(18, rpio.OUTPUT, rpio.HIGH);
+    process.exit();
+  }
+
+  process.on('exit', cleanup);
+  process.on('SIGINT', cleanup);
+  process.on('SIGUSR1', cleanup);
+  process.on('SIGUSR2', cleanup);
+  process.on('uncaughtException', cleanup);
+
 };
 
 startServer();
