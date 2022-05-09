@@ -80,7 +80,7 @@ const startServer = async () => {
 
   async function management(){
     greenhouseManagement()
-    setTimeout(management, 5 * 60 * 1000) // Every 10 mins = 10 * 60 * 1000
+    setTimeout(management, 15 * 60 * 1000) // Every 15 mins = 15 * 60 * 1000
   }
 
   async function fertilizerDosage(){

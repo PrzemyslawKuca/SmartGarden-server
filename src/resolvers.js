@@ -194,13 +194,29 @@ export const resolvers = {
         refreshToken
       } = createTokens(user);
 
-      // res.cookie("refresh-token", refreshToken);
-      // res.cookie("access-token", accessToken);
-
       return {
         access_token: accessToken,
         refresh_token: refreshToken
       };
+    },
+    refreshToken: async (_, { refresh_token }, { res, req }) => {
+      if (refresh_token) {
+        const {expire_in, id} = jwt.decode(refresh_token)
+
+        const user = await User.findOne({
+          'ID': id
+        }).exec();
+
+        const {
+          accessToken,
+          refreshToken
+        } = createTokens(user);
+
+        return {
+          access_token: accessToken,
+          refresh_token: refreshToken
+        };
+      }
     },
     confirmEmail: async (_, { token }, { res, req }) => {
       const { email } = jwt.verify(token, process.env.EMAIL_SECRET);
@@ -443,13 +459,13 @@ export const resolvers = {
         updated_at: new Date().toISOString()
       }).exec();
 
+      const savedSettings = await Settings.findOne({});
+
       const newHistory= new History({
-        comment: `Zmieniono tryb pracy na: ${mode}`,
+        comment: `Zmieniono tryb pracy na: ${savedSettings.mode}`,
         created_at: new Date().toISOString(),
       });
       await newHistory.save()
-
-      const savedSettings = await Settings.findOne({});
 
       if(current_plan){
         await Profiles.updateOne({'_id': current_plan}, {

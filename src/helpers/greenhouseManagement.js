@@ -52,11 +52,25 @@ export const greenhouseManagement = async () => {
           }
         })
 
-        if(currentStage){
-          if(air_humidity < profiles[0].schedule[currentStage].air_humidity && settings[0].fan){
-            fan(10)
+        if(currentStage != null){
+          if((air_humidity > profiles[0].schedule[currentStage].air_humidity && settings[0].fan) || (air_temperature > profiles[0].schedule[currentStage].air_temperature && settings[0].fan)){
+            let time = 0
+            
+            if(air_temperature > profiles[0].schedule[currentStage].air_temperature){
+              time += (air_temperature - profiles[0].schedule[currentStage].air_temperature);
+            }
+
+            if(air_humidity > profiles[0].schedule[currentStage].air_humidity){
+              time += (air_humidity - profiles[0].schedule[currentStage].air_humidity);
+            }
+
+            if(time > 60){
+              time = 60
+            }
+            
+            fan(time)
             const newHistory= new History({
-              comment: `Plan: Uruchomiono wentylację`,
+              comment: `Plan: Uruchomiono wentylację na ${time.toFixed(2)}s`,
               created_at: new Date().toISOString(),
             });
             await newHistory.save()
@@ -71,30 +85,20 @@ export const greenhouseManagement = async () => {
             await newHistory.save()
           }
     
-          if(air_temperature < profiles[0].schedule[currentStage].air_temperature && settings[0].fan){
-            fan(10)
+          if(light_level < profiles[0].schedule[currentStage].light_level && getCurrentHour() > profiles[0].schedule[currentStage].light.start_hour && getCurrentHour() < profiles[0].schedule[currentStage].light.end_hour && settings[0].light){
+            light(true)
             const newHistory= new History({
-              comment: `Plan: Uruchomiono wentylację`,
+              comment: `Plan: Włączono oświetlenie`,
               created_at: new Date().toISOString(),
             });
             await newHistory.save()
-          }
-    
-          if(light_level < profiles[0].schedule[currentStage].light_level && getCurrentHour() > profiles[0].schedule[currentStage].light.start_hour && getCurrentHour() < profiles[0].schedule[currentStage].light.end_hour && settings[0].light){
-            light(true)
-            // const newHistory= new History({
-            //   comment: `Plan: Włączono oświetlenie`,
-            //   created_at: new Date().toISOString(),
-            // });
-            // await newHistory.save()
-          
           }else{
             light(false)
-              // const newHistory= new History({
-              //   comment: `Plan: Wyłączono oświetlenie`,
-              //   created_at: new Date().toISOString(),
-              // });
-              // await newHistory.save()
+              const newHistory= new History({
+                comment: `Plan: Wyłączono oświetlenie`,
+                created_at: new Date().toISOString(),
+              });
+              await newHistory.save()
           }
         }
     }
@@ -102,10 +106,24 @@ export const greenhouseManagement = async () => {
     if(settings[0].mode === 'manual'){
       const manualProfile = await ManualProfile.findOne({}).exec()
 
-      if(air_humidity > manualProfile.air_humidity && settings[0].fan){
-        fan(10)
+      if((air_humidity > manualProfile.air_humidity && settings[0].fan) || (air_temperature > manualProfile.air_temperature && settings[0].fan)){
+        let time = 0
+        
+        if(air_temperature > manualProfile.air_temperature){
+          time += (air_temperature - manualProfile.air_temperature);
+        }
+
+        if(air_humidity > manualProfile.air_humidity){
+          time += (air_humidity - manualProfile.air_humidity);
+        }
+
+        if(time > 60){
+          time = 60
+        }
+        
+        fan(time)
         const newHistory= new History({
-          comment: `Plan manualny: Uruchomiono wentylację`,
+          comment: `Plan: Uruchomiono wentylację na ${time.toFixed(2)}s`,
           created_at: new Date().toISOString(),
         });
         await newHistory.save()
@@ -120,30 +138,20 @@ export const greenhouseManagement = async () => {
         await newHistory.save()
       }
 
-      if(air_temperature > manualProfile.air_temperature && settings[0].fan){
-        fan(10)
-        const newHistory= new History({
-          comment: `Plan manualny: Uruchomiono wentylację`,
-          created_at: new Date().toISOString(),
-        });
-        await newHistory.save()
-      }
-
       if(light_level < manualProfile.light.minimumLevel && getCurrentHour() > manualProfile.light.start_hour && getCurrentHour() < manualProfile.light.end_hour && settings[0].light){
         light(true)
-          // const newHistory= new History({
-          //   comment: `Plan manualny: Włączono oświetlenie`,
-          //   created_at: new Date().toISOString(),
-          // });
-          // await newHistory.save()
-        
+          const newHistory= new History({
+            comment: `Plan manualny: Włączono oświetlenie`,
+            created_at: new Date().toISOString(),
+          });
+          await newHistory.save()   
       }else{
         light(false)
-          // const newHistory= new History({
-          //   comment: `Plan manualny: Wyłączono oświetlenie`,
-          //   created_at: new Date().toISOString(),
-          // });
-          // await newHistory.save()
+          const newHistory= new History({
+            comment: `Plan manualny: Wyłączono oświetlenie`,
+            created_at: new Date().toISOString(),
+          });
+          await newHistory.save()
       }
     }
 

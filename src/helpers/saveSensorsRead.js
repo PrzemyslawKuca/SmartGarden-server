@@ -20,7 +20,7 @@ async function checkValues(value, min, max, comment){
       let formatDateForDisplay = moment(now).format('DD.MM.YYYY')
       let users = await User.find({}).exec();
 
-      users.map((user)=>{
+      await users.map((user)=>{
         if(user.notifications_alerts){
           transporter.sendMail({
             from: '"Smart Garden" <smartfarmpwsz@gmail.com>',

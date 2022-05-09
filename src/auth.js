@@ -11,9 +11,13 @@ export const createTokens = (user) => {
     );
 
     let date = new Date();
-    const accessToken = jwt.sign({ id: user.id, expire_in: date.setDate(date.getDate() + 1)}, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1d"
-    });
+    const accessToken = jwt.sign(
+        { id: user.id, expire_in: date.setDate(date.getDate() + 1)}, 
+        process.env.ACCESS_TOKEN_SECRET, 
+        {
+            expiresIn: "1d"
+        }
+    );
 
     return { refreshToken, accessToken };
 };
