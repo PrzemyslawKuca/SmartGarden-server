@@ -135,7 +135,7 @@ export const typeDefs = gql`
     confirmEmail(token: String!): Boolean
     inviteUser(email: String): Boolean
     invitationUserRegister(token: String!, password: String!, name: String!): Boolean
-    editUser(email: String, password: String, name: String, notifications: Boolean, notifications_alerts: Boolean): User
+    editUser(email: String, password: String, oldPassword: String!, name: String, notifications: Boolean, notifications_alerts: Boolean): User
     editUserPermission(id: ID!, role: String, confirmed_by_admin: Boolean): Boolean
     deleteUser(id: ID!): Boolean
     setupSettings(mode: String, interval: Int): Settings

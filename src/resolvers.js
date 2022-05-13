@@ -264,7 +264,7 @@ export const resolvers = {
         return false;
       }
     },
-    editUser: async (_, { name, email, password, notifications, notifications_alerts }, { res, req }) => {
+    editUser: async (_, { name, email, password, oldPassword, notifications, notifications_alerts }, { res, req }) => {
       if (!req.userId) {
         throw new AuthenticationError('Unauthenticated');
       }
@@ -275,6 +275,12 @@ export const resolvers = {
 
       if (emailExist && req.userId != emailExist.id) {
         throw new Error("Email exists")
+      }
+
+      const valid = await bcrypt.compare(oldPassword, emailExist.password);
+
+      if (!valid) {
+        throw new Error('Password not valid');
       }
 
       await User.updateOne({
